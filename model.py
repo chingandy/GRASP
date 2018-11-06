@@ -5,7 +5,8 @@ from __future__ import print_function
 # Imports
 import numpy as np
 import tensorflow as tf
-from data import read_dataset
+from data import read_dataset, read_dataset_2
+from preprcs import separate_classes
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -81,10 +82,32 @@ def cnn_model_fn(features, labels, mode):
   return tf.estimator.EstimatorSpec(
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
+
+
+def file_len(filename):
+    """ count the number of lines in the file """
+
+    with open(filename) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+
+
 def main(unused_argv):
 
-    DATASETNAME = "Data_science_dataset/Dataset_all_test"
-
+    # training_dataset = "/Users/chingandywu/GRASP/test"
+    # test_dataset = "/Users/chingandywu/GRASP/train"
+    # filepath_train = "/Users/chingandywu/GRASP/rebuilt-dataset/test.txt"
+    # filepath_test  = "/Users/chingandywu/GRASP/rebuilt-dataset/train.txt"
+    # train_size = file_len(filepath_train)
+    # test_size = file_len(filepath_test)
+    training_dataset = "/Users/chingandywu/GRASP/dataset_100_200"
+    test_dataset = training_dataset
+    filepath_train = "/Users/chingandywu/GRASP/data_gen/dataset_100_200.txt"
+    filepath_test  = filepath_train
+    train_size = file_len(filepath_train)
+    test_size = train_size
+    print("SIZE: ", train_size)
     # Load training and eval data
     # mnist = tf.contrib.learn.datasets.load_dataset("mnist")
     # train_data = mnist.train.images # Returns np.array
@@ -92,19 +115,21 @@ def main(unused_argv):
     # eval_data = mnist.test.images # Returns np.array
     # eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
     """ grasp data read in """
-    train_data, re_filename, _, _, train_labels=read_dataset(DATASETNAME)
-    eval_data, re_filename, _, _, eval_labels=read_dataset(DATASETNAME)
+    train_data, train_labels=read_dataset_2(training_dataset, train_size)
+    eval_data,  eval_labels=read_dataset_2(test_dataset, test_size)
+    # train_data, re_filename, _, _, train_labels=read_dataset(training_dataset)
+    # eval_data, re_filename, _, _, eval_labels=read_dataset(test_dataset)
     train_labels = np.int32(train_labels)
     eval_labels = np.int32(eval_labels)
 
-    print("X"*50)
-    print("TYPE train_data: ", type(train_data))
-    print("SIZE: ", train_data.shape )
-    print("TYPE train_labels: ", type(train_labels))
-    print("SIZE: ", train_labels.shape )
+    # print("X"*50)
+    # print("TYPE train_data: ", type(train_data))
+    # print("SIZE: ", train_data.shape )
+    # print("TYPE train_labels: ", type(train_labels))
+    # print("SIZE: ", train_labels.shape )
 
     # Create the Estimator
-    mnist_classifier = tf.estimator.Estimator(
+    classifier = tf.estimator.Estimator(
     model_fn=cnn_model_fn, model_dir="/Users/chingandywu/GRASP/model_checkpoint")
 
     # Set up logging for predictions
@@ -119,18 +144,18 @@ def main(unused_argv):
         batch_size=1,
         num_epochs=None,
         shuffle=True)
-    mnist_classifier.train(
+    classifier.train(
         input_fn=train_input_fn,
         steps=20000,
-        hooks=[logging_hook])
+        hooks=[logging_hook]) # We pass our logging_hook to the hooks argument, so that it will be triggered during training.
 
     # Evaluate the model and print results
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": eval_data},
         y=eval_labels,
-        num_epochs=1,
+        num_epochs=10,
         shuffle=False)
-    eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
+    eval_results = classifier.evaluate(input_fn=eval_input_fn)
     # print(eval_results)
 
 if __name__ == "__main__":
