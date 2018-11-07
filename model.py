@@ -13,16 +13,11 @@ tf.logging.set_verbosity(tf.logging.INFO)
 def cnn_model_fn(features, labels, mode):
   """Model function for CNN."""
   # Input Layer
-  # input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
-  # print()
   # print("#"*80)
   # print("input_layer:", input_layer.dtype)
   # print("input_layer:", input_layer.get_shape())
-  input_layer = features["x"]
+  input_layer = tf.reshape(features["x"], [-1,64,64,2])
   input_layer = tf.cast(input_layer, tf.float32)
-  # print("#"*80)
-  # print(input_layer.get_shape())
-  # print(input_layer.dtype)
   # Convolutional Layer #1
   conv1 = tf.layers.conv2d(
       inputs=input_layer,
@@ -83,54 +78,46 @@ def cnn_model_fn(features, labels, mode):
 
 def main(unused_argv):
 
-    DATASETNAME = "Data_science_dataset/Dataset_all_test"
-
+    DATASETNAME = "../../Data_science_dataset/Dataset_small_test"
     # Load training and eval data
-    # mnist = tf.contrib.learn.datasets.load_dataset("mnist")
-    # train_data = mnist.train.images # Returns np.array
-    # train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-    # eval_data = mnist.test.images # Returns np.array
-    # eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
     """ grasp data read in """
-    train_data, re_filename, _, _, train_labels=read_dataset(DATASETNAME)
-    eval_data, re_filename, _, _, eval_labels=read_dataset(DATASETNAME)
-    train_labels = np.int32(train_labels)
-    eval_labels = np.int32(eval_labels)
+
+    features, labels = read_dataset(DATASETNAME)
+    #train_labels = np.int32(train_labels)
+    #eval_labels = np.int32(eval_labels)
 
     print("X"*50)
-    print("TYPE train_data: ", type(train_data))
-    print("SIZE: ", train_data.shape )
-    print("TYPE train_labels: ", type(train_labels))
-    print("SIZE: ", train_labels.shape )
+    print("TYPE feature: ", type(features))
+    print("SIZE: ", features.shape)
 
     # Create the Estimator
-    mnist_classifier = tf.estimator.Estimator(
-    model_fn=cnn_model_fn, model_dir="/Users/chingandywu/GRASP/model_checkpoint")
+    grasp_classifier = tf.estimator.Estimator(
+    model_fn=cnn_model_fn, model_dir="model_checkpoint")
 
     # Set up logging for predictions
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
     tensors=tensors_to_log, every_n_iter=50)
-
+    
     # Train the model
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": train_data},
-        y=train_labels,
+        x={"x": features},
+        y=labels,
         batch_size=1,
         num_epochs=None,
         shuffle=True)
-    mnist_classifier.train(
+    grasp_classifier.train(
         input_fn=train_input_fn,
         steps=20000,
         hooks=[logging_hook])
 
     # Evaluate the model and print results
     eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": eval_data},
-        y=eval_labels,
+        x={"x": features},
+        y=labels,
         num_epochs=1,
         shuffle=False)
-    eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
+    eval_results = grasp_classifier.evaluate(input_fn=eval_input_fn)
     # print(eval_results)
 
 if __name__ == "__main__":
