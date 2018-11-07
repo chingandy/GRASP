@@ -95,19 +95,21 @@ def file_len(filename):
 
 def main(unused_argv):
 
-    # training_dataset = "/Users/chingandywu/GRASP/test"
-    # test_dataset = "/Users/chingandywu/GRASP/train"
-    # filepath_train = "/Users/chingandywu/GRASP/rebuilt-dataset/test.txt"
-    # filepath_test  = "/Users/chingandywu/GRASP/rebuilt-dataset/train.txt"
-    # train_size = file_len(filepath_train)
-    # test_size = file_len(filepath_test)
-    training_dataset = "/Users/chingandywu/GRASP/dataset_100_200"
-    test_dataset = training_dataset
-    filepath_train = "/Users/chingandywu/GRASP/data_gen/dataset_100_200.txt"
-    filepath_test  = filepath_train
+    training_dataset = "/Users/chingandywu/GRASP/re_dataset_100_200"
+    test_dataset = "/Users/chingandywu/GRASP/re_dataset_300_400"
+    filepath_train = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_100_200.txt"
+    filepath_test  = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_300_400.txt"
     train_size = file_len(filepath_train)
-    test_size = train_size
-    print("SIZE: ", train_size)
+    # test_size = file_len(filepath_test)
+    test_size = 100
+
+    # training_dataset = "/Users/chingandywu/GRASP/dataset_100_200"
+    # test_dataset = training_dataset
+    # filepath_train = "/Users/chingandywu/GRASP/data_gen/dataset_100_200.txt"
+    # filepath_test  = filepath_train
+    # train_size = file_len(filepath_train)
+    # test_size = train_size
+    # print("SIZE: ", train_size)
     # Load training and eval data
     # mnist = tf.contrib.learn.datasets.load_dataset("mnist")
     # train_data = mnist.train.images # Returns np.array
@@ -130,7 +132,7 @@ def main(unused_argv):
 
     # Create the Estimator
     classifier = tf.estimator.Estimator(
-    model_fn=cnn_model_fn, model_dir="/Users/chingandywu/GRASP/model_checkpoint")
+    model_fn=cnn_model_fn, model_dir="/Users/chingandywu/GRASP/model_checkpoint2")
 
     # Set up logging for predictions
     tensors_to_log = {"probabilities": "softmax_tensor"}
@@ -141,12 +143,12 @@ def main(unused_argv):
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": train_data},
         y=train_labels,
-        batch_size=1,
+        batch_size=10,
         num_epochs=None,
         shuffle=True)
     classifier.train(
         input_fn=train_input_fn,
-        steps=20000,
+        steps=2000,
         hooks=[logging_hook]) # We pass our logging_hook to the hooks argument, so that it will be triggered during training.
 
     # Evaluate the model and print results
@@ -156,8 +158,9 @@ def main(unused_argv):
         num_epochs=10,
         shuffle=False)
     eval_results = classifier.evaluate(input_fn=eval_input_fn)
-    # print(eval_results)
+    print(eval_results)
 
 if __name__ == "__main__":
+
 
   tf.app.run()

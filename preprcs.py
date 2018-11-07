@@ -2,6 +2,8 @@
 import random
 import numpy as np
 from itertools import cycle
+import sys
+
 def separate_classes(filepath):
     """ separate the data into two different classes"""
     dict = {}
@@ -107,7 +109,8 @@ def rebuilt_dataset(filepath):
 
 def rebuilt_dataset_2(filepath):
 
-    new_path = "/Users/chingandywu/GRASP/rebuilt-dataset/balance.txt"
+    new_path = filepath.split("/")[-1]
+    new_path = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + new_path
     cage_r, cage_ir = separate_classes(filepath)
     # objects_r = check_objects(cage_r)
     # objects_ir = check_objects(cage_ir)
@@ -149,5 +152,13 @@ def rebuilt_dataset_2(filepath):
 
 if __name__ == '__main__':
 
-    filepath = "/Users/chingandywu/GRASP/data_gen/dataset_300_400.txt"
+    print(sys.argv)
+
+    if(len(sys.argv) < 2):
+        print('usage: gentf.py <.txt file>, where <.txt file> is the file you want to preprocess')
+        quit()
+
+    # datasetfile= str(sys.argv[1])
+    filepath = str(sys.argv[1])
+    # filepath = "/Users/chingandywu/GRASP/data_gen/dataset_300_400.txt"
     rebuilt_dataset_2(filepath)
