@@ -76,10 +76,6 @@ def read_dataset(DATASETNAME):
       sess.run(iterator.initializer, feed_dict={filenames: training_filenames})
 
       image64, trainlabel, filename,f1,f2 = iterator.get_next()
-      print("image64 TYPE: ", type(image64))
-      print("img64 SIZE: ", image64.shape)
-      print("trainlabel TYPE:", type(trainlabel))
-      print("trainlabel SIZE:", trainlabel.shape)
 
       reconstructed_img64,re_filename,re_f1,re_f2,re_trainlabel = sess.run([image64,filename,f1,f2,trainlabel])
 
@@ -188,4 +184,9 @@ def main():
 
 
 if __name__ == '__main__':
+    # DATASETNAME = "/Users/chingandywu/GRASP/dataset_100_200"
+    # reconstructed_img64, re_filename, re_f1, re_f2, re_trainlabel = read_dataset(DATASETNAME)
+    # print("reconstructed_img64.type: \n", type(reconstructed_img64))
+    # print("reconstructed_img64.size: \n", reconstructed_img64.shape)
+
     main()

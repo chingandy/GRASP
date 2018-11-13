@@ -1,166 +1,309 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-# Imports
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
-from data import read_dataset, read_dataset_2
-from preprcs import separate_classes
+from tensorflow.examples.tutorials.mnist import input_data
+from data import parser
+# %matplotlib inline
+import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
-tf.logging.set_verbosity(tf.logging.INFO)
-
-# Our application logic will be added here
-def cnn_model_fn(features, labels, mode):
-  """Model function for CNN."""
-  # Input Layer
-  # input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
-  # print()
-  # print("#"*80)
-  # print("input_layer:", input_layer.dtype)
-  # print("input_layer:", input_layer.get_shape())
-  input_layer = features["x"]
-  input_layer = tf.cast(input_layer, tf.float32)
-  # print("#"*80)
-  # print(input_layer.get_shape())
-  # print(input_layer.dtype)
-  # Convolutional Layer #1
-  conv1 = tf.layers.conv2d(
-      inputs=input_layer,
-      filters=32,
-      kernel_size=[5, 5],
-      padding="same",
-      activation=tf.nn.relu)
-
-  # Pooling Layer #1
-  pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
-
-  # Convolutional Layer #2 and Pooling Layer #2
-  conv2 = tf.layers.conv2d(
-      inputs=pool1,
-      filters=64,
-      kernel_size=[5, 5],
-      padding="same",
-      activation=tf.nn.relu)
-  pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
-
-  # Dense Layer
-  pool2_flat = tf.reshape(pool2, [-1, 16 * 16 * 64])
-  dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-  dropout = tf.layers.dropout(
-      inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
-
-  # Logits Layer
-  logits = tf.layers.dense(inputs=dropout, units=2)
-
-  predictions = {
-      # Generate predictions (for PREDICT and EVAL mode)
-      "classes": tf.argmax(input=logits, axis=1),
-      # Add `softmax_tensor` to the graph. It is used for PREDICT and by the
-      # `logging_hook`.
-      "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
-  }
-
-  if mode == tf.estimator.ModeKeys.PREDICT:
-    return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
-
-  # Calculate Loss (for both TRAIN and EVAL modes)
-  loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
-
-  # Configure the Training Op (for TRAIN mode)
-  if mode == tf.estimator.ModeKeys.TRAIN:
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
-    train_op = optimizer.minimize(
-        loss=loss,
-        global_step=tf.train.get_global_step())
-    return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
-
-  # Add evaluation metrics (for EVAL mode)
-  eval_metric_ops = {
-      "accuracy": tf.metrics.accuracy(
-          labels=labels, predictions=predictions["classes"])}
-  return tf.estimator.EstimatorSpec(
-      mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+def make_one_hot(dataset):
+    new_dataset = []
+    for e in dataset:
+        e = int(e)
+        vec = np.zeros(2)
+        vec[e] = 1;
+        new_dataset.append(vec)
+    return np.array(new_dataset)
 
 
 
-def file_len(filename):
-    """ count the number of lines in the file """
+# Create dictionary of target classes
+label_dict = {
+0: 'cage relevant',
+1: 'cage irrelevant',
+}
 
-    with open(filename) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
+# plt.figure(figsize=[5,5])
+#
+# # Display the first image in training data
+# plt.subplot(121)
+# # curr_img = np.reshape(data.train.images[0], (28,28))
+# curr_img = np.reshape(x_train[0], (28,28))
+# # curr_lbl = np.argmax(data.train.labels[0,:])
+# curr_lbl = y_train[0][0]
+# print("curr_lbl:", curr_lbl)
+# plt.imshow(curr_img, cmap="gray")
+# print(label_dict[curr_lbl])
+# plt.title("(Label:" + str(label_dict[curr_lbl]) + ")" )
+#
+# # Display the first image in testing data
+# plt.subplot(122)
+# # curr_img = np.reshape(data.test.images[0], (28,28))
+# # curr_lbl = np.argmax(data.test.labels[0,:])
+# curr_img = np.reshape(x_test[0], (28,28))
+# curr_lbl = y_test[0][0]
+# plt.imshow(curr_img, cmap="gray")
+# plt.title("(Label:" + str(label_dict[curr_lbl]) + ")")
+
+# plt.show()
+#
+#
+# """ Data Preprocessing """
+# print(data.train.images[0])
+# print(np.max(data.train.images[1]))
+# print(np.min(data.train.images[1]))
+#
+# # Reshpae training and testing image
+# train_x = data.train.images.reshape(-1,28,28,1)
+# test_x = data.test.images.reshape(-1,28,28,1)
+# print(train_x.shape)
+# print(test_x.shape)
+# train_y = data.train.labels
+# test_y = data.test.labels
+# print(train_y.shape)
+# print(test_y.shape)
+#
+# print("from fashion-mnist: ",x_train.shape)
+# x_train = np.reshape(x_train,(-1,28,28,1))
+# print(x_train.shape)
+
+training_iters = 100
+learning_rate = 0.001
+batch_size = 2
+
+# MNIST data input (img shape: 28*28)
+n_input = 64 # in our case (img: 64*64)
+# MNIST total classes (0-9 digits)
+# n_classes = 10
+n_classes = 2
+
+# both placeholders are of type float
+# x = tf.placeholder("float", [None, 28,28,1])
+x = tf.placeholder("float", [None, 64,64,2])
+y = tf.placeholder("float", [None, n_classes])
+
+def conv2d(x, W, b, strides=1):
+    # Conv2D wrapper, with bias and relu activation
+    x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME')
+    x = tf.nn.bias_add(x,b)
+
+    return tf.nn.relu(x)
+
+def maxpool2d(x, k=2):
+
+    return tf.nn.max_pool(x, ksize=[1,k,k,1], strides=[1,k,k,1], padding='SAME')
+
+def dropout(x, keep_prob):
+
+    return tf.nn.dropout(x, keep_prob)
+
+weights = {
+    'wc1': tf.get_variable('W0', shape=(7,7,2,64), initializer=tf.contrib.layers.xavier_initializer()), # original: shape=(3,3,1,32)
+    'wc2': tf.get_variable('W1', shape=(5,5,64,64), initializer=tf.contrib.layers.xavier_initializer()),
+    'wc3': tf.get_variable('W2', shape=(3,3,64,128), initializer=tf.contrib.layers.xavier_initializer()),
+    'wd1': tf.get_variable('W3', shape=(8*8*128,128), initializer=tf.contrib.layers.xavier_initializer()),
+    'out': tf.get_variable('W6', shape=(128, n_classes), initializer=tf.contrib.layers.xavier_initializer()),
+
+}
+
+biases = {
+    'bc1': tf.get_variable('B0', shape=(64), initializer=tf.contrib.layers.xavier_initializer()),
+    'bc2': tf.get_variable('B1', shape=(64), initializer=tf.contrib.layers.xavier_initializer()),
+    'bc3': tf.get_variable('B2', shape=(128), initializer=tf.contrib.layers.xavier_initializer()),
+    'bd1': tf.get_variable('B3', shape=(128), initializer=tf.contrib.layers.xavier_initializer()),
+    'out': tf.get_variable('B4', shape=(2), initializer=tf.contrib.layers.xavier_initializer()),  # original: shape=(10)
+}
+
+keep_prob = tf.placeholder(tf.float32)
+
+def conv_net(x, weights, biases):
+
+    # here we call the conv2d function we had defined above and pass the input image x, weights wc1 and bias bc1.
+    conv1 = conv2d(x, weights['wc1'], biases['bc1'])
+    # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 14*14 matrix.
+    conv1 = maxpool2d(conv1, k=2)
+
+    # Convolution Layer
+    # here we call the conv2d function we had defined above and pass the input image x, weights wc2 and bias bc2.
+    conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
+    # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs as 7*7 matrix.
+    conv2 = maxpool2d(conv2, k=2)
+    conv2 = dropout(conv2, keep_prob)
+
+    conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
+    # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 4*4.
+    conv3 = maxpool2d(conv3, k=2)
+
+    # Fully connected layer
+    # Reshape conv2 output to fit fully connected layer input
+    fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
+    fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
+    fc1 = tf.nn.relu(fc1)
+
+    # Ouput, class prediction
+    # finally we multiply the fully connected layer with the weights and add a bias term
+    out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
+    return out
 
 
-def main(unused_argv):
+global_step = tf.Variable(0, name='global_step', trainable=False)
+pred = conv_net(x, weights, biases)
+cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)
 
-    training_dataset = "/Users/chingandywu/GRASP/re_dataset_100_200"
-    test_dataset = "/Users/chingandywu/GRASP/re_dataset_300_400"
-    filepath_train = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_100_200.txt"
-    filepath_test  = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_300_400.txt"
-    train_size = file_len(filepath_train)
-    # test_size = file_len(filepath_test)
-    test_size = 100
+# Here you check whether the index of the maximum value of the predicted image is equal to the actual labelled image. and both will be a column vector
+correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
 
-    # training_dataset = "/Users/chingandywu/GRASP/dataset_100_200"
-    # test_dataset = training_dataset
-    # filepath_train = "/Users/chingandywu/GRASP/data_gen/dataset_100_200.txt"
-    # filepath_test  = filepath_train
-    # train_size = file_len(filepath_train)
-    # test_size = train_size
-    # print("SIZE: ", train_size)
-    # Load training and eval data
-    # mnist = tf.contrib.learn.datasets.load_dataset("mnist")
-    # train_data = mnist.train.images # Returns np.array
-    # train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
-    # eval_data = mnist.test.images # Returns np.array
-    # eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
-    """ grasp data read in """
-    train_data, train_labels=read_dataset_2(training_dataset, train_size)
-    eval_data,  eval_labels=read_dataset_2(test_dataset, test_size)
-    # train_data, re_filename, _, _, train_labels=read_dataset(training_dataset)
-    # eval_data, re_filename, _, _, eval_labels=read_dataset(test_dataset)
-    train_labels = np.int32(train_labels)
-    eval_labels = np.int32(eval_labels)
+# calculate accuracy across all the given images and average them out
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+# Initializing the variables
+init = tf.global_variables_initializer()
 
-    # print("X"*50)
-    # print("TYPE train_data: ", type(train_data))
-    # print("SIZE: ", train_data.shape )
-    # print("TYPE train_labels: ", type(train_labels))
-    # print("SIZE: ", train_labels.shape )
+saver = tf.train.Saver()
 
-    # Create the Estimator
-    classifier = tf.estimator.Estimator(
-    model_fn=cnn_model_fn, model_dir="/Users/chingandywu/GRASP/model_checkpoint2")
+training_dataset = "re_dataset_100_200.tfrecords"
+test_dataset = "re_dataset_300_400.tfrecords"
+# training_dataset = "small_dataset_100_200.tfrecords"
+# test_dataset = "test_small_dataset_100_200.tfrecords"
 
-    # Set up logging for predictions
-    tensors_to_log = {"probabilities": "softmax_tensor"}
-    logging_hook = tf.train.LoggingTensorHook(
-    tensors=tensors_to_log, every_n_iter=50)
+with tf.Session() as sess:
+    sess.run(init)
+    # Restore variables from disk.
+    save_path = "/Users/chingandywu/GRASP/checkpoint_4/"
+    if os.path.exists(save_path):
+        saver.restore(sess, tf.train.latest_checkpoint(save_path))
+        print("Model restored.")
 
-    # Train the model
-    train_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": train_data},
-        y=train_labels,
-        batch_size=10,
-        num_epochs=None,
-        shuffle=True)
-    classifier.train(
-        input_fn=train_input_fn,
-        steps=2000,
-        hooks=[logging_hook]) # We pass our logging_hook to the hooks argument, so that it will be triggered during training.
+    step = global_step.eval(session=sess)
+    print("#########################Global Step: ", step)
 
-    # Evaluate the model and print results
-    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-        x={"x": eval_data},
-        y=eval_labels,
-        num_epochs=10,
-        shuffle=False)
-    eval_results = classifier.evaluate(input_fn=eval_input_fn)
-    print(eval_results)
+    # Read in the training and test data in tfrecords format
+    filenames = tf.placeholder(tf.string, shape=[None])
+    dataset = tf.data.TFRecordDataset(filenames)
 
-if __name__ == "__main__":
+    # Map the parser over dataset, and batch results by up to batch_size
+    dataset = dataset.map(parser,num_parallel_calls=None)
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.repeat()
+    iterator1 = dataset.make_initializable_iterator()
+    iterator2 = dataset.make_initializable_iterator()
 
 
-  tf.app.run()
+    # training_filenames = [os.path.join(DATASETNAME +'.tfrecords')]
+    # training_dataset = "re_dataset_100_200.tfrecords"
+    # training_dataset = "small_dataset_100_200.tfrecords"
+    sess.run(iterator1.initializer, feed_dict={filenames:[training_dataset]})
+    train_images, train_labels, filename,f1,f2 = iterator1.get_next()
+    # test_dataset = "re_dataset_300_400.tfrecords"
+    # test_dataset = "test_small_dataset_100_200.tfrecords"
+    sess.run(iterator2.initializer, feed_dict={filenames:[test_dataset]})
+    test_images, test_labels, filename,f1,f2 = iterator2.get_next()
+
+    # """ check if training data is different from test data"""
+    # if sess.run(tf.reduce_all(tf.equal(train_images, test_images))):
+    #     print('train_images is equal test_images')
+    # else:
+    #     print('train_images is not equal test_images')
+
+
+    train_loss = []
+    test_loss = []
+    train_accuracy = []
+    test_accuracy = []
+    summary_writer = tf.summary.FileWriter('./Output', sess.graph)
+
+
+    for i in range(training_iters):
+
+        # sess.run([train_op,increment_global_step],feed_dict=feed_dict)
+        # if accuracy < 0.9:
+            # batch_x = x_train[batch*batch_size:min((batch+1)*batch_size,len(x_train))]
+            # batch_y = y_train[batch*batch_size:min((batch+1)*batch_size,len(y_train))]
+            # # Run optimization op (backprop)
+            # calculate batch loss and accuracy
+        # traing data in a batch
+        batch_x, batch_y = sess.run([train_images, train_labels])
+        # data preprocessing
+        batch_x = batch_x/255
+        batch_y = make_one_hot(batch_y)
+
+        opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 1.0})
+        loss, acc = sess.run([cost, accuracy], feed_dict={x:batch_x, y:batch_y, keep_prob:1.0})
+
+        print("Iter "+ str(i + step + 1) + ", Loss= " + "{:.6f}".format(loss) + ", Training Accuracy= " + "{:.5f}".format(acc))
+        print("Optimization Finished!")
+
+
+        # test data in a batch
+        x_test, y_test = sess.run([test_images, test_labels])
+        # data preprocessing
+        x_test = x_test/255
+        y_test = make_one_hot(y_test)
+
+        """ show training images and test images"""
+        if i < 2:
+
+            plt.subplot(221)
+            img = (batch_x[0,:,:,0] + batch_x[0,:,:,1])/2.0
+            plt.imshow(img)
+            label = np.nonzero(batch_y[0,:])[0][0]
+            plt.title("label: "+ label_dict[label])
+
+            plt.subplot(222)
+            img = (batch_x[1,:,:,0] + batch_x[1,:,:,1])/2.0
+            plt.imshow(img)
+            label = np.nonzero(batch_y[1,:])[0][0]
+            plt.title("label: "+ label_dict[label])
+
+            plt.subplot(223)
+            img = (x_test[0,:,:,0] + x_test[0,:,:,1])/2.0
+            plt.imshow(img)
+            label = np.nonzero(y_test[0,:])[0][0]
+            plt.title("label: "+ label_dict[label])
+
+            plt.subplot(224)
+            img = (x_test[1,:,:,0] + x_test[1,:,:,1])/2.0
+            plt.imshow(img)
+            label = np.nonzero(y_test[1,:])[0][0]
+            plt.title("label: "+ label_dict[label])
+            plt.tight_layout()
+            plt.show()
+
+
+        # print("batch_x: \n", type(batch_x), batch_x.shape)
+        # print("batch_y: \n", type(batch_y), batch_y.shape)
+        # print("x_test: \n", type(x_test), x_test.shape)
+        # print("y_test: \n", type(y_test), y_test.shape)
+
+        test_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+        train_loss.append(loss)
+        test_loss.append(valid_loss)
+        train_accuracy.append(acc)
+        test_accuracy.append(test_acc)
+        print("Testing Accuracy:", "{:.5f}".format(test_acc))
+
+
+
+    summary_writer.close()
+    save_path = saver.save(sess, "/Users/chingandywu/GRASP/checkpoint_4/", global_step=global_step)
+    print("Model saved in path: %s" % save_path)
+
+""" plot the training and test loss """
+plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
+plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
+plt.title("Training and Test loss")
+plt.xlabel("Epochs ", fontsize=16)
+plt.ylabel("Loss ", fontsize=16)
+plt.legend()
+plt.show()
+
+""" plot the trainng and test accuracy """
+plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
+plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
+plt.title("Training and Test Accuracy")
+plt.xlabel("Epochs ", fontsize=16)
+plt.ylabel("Accuracy ", fontsize=16)
+plt.legend()
+
+plt.show()
