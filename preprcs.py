@@ -115,15 +115,19 @@ def rebuilt_dataset(filepath):
     # print(choice)
     # print(type(choice))
 
-def rebuilt_dataset_2(filepath):
+def rebuilt_dataset_2(filepath, savepath):
 
-    new_path = filepath.split("/")[-1]
-    new_path = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + new_path
+    save_path = filepath.split("/")[-1]
+    if savepath == 0:
+        save_path = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + save_path
+    else:
+        save_path = savepath + "re_" + save_path
+
     cage_r, cage_ir = separate_classes(filepath)
 
     rebuilt_size = len(cage_ir) # we first rebuild the dataset based on the size of cage-irrelevant case
 
-    with open(new_path,"w") as w:
+    with open(save_path,"w") as w:
         for itr in range(rebuilt_size):
             for e in cage_ir:
                 w.write(','.join(e))
@@ -144,15 +148,18 @@ def rebuilt_dataset_2(filepath):
             # choice = ','.join(choice)
             # w.write(choice)
 
-def built_small_dataset(filepath):
+def built_small_dataset(filepath, savepath):
     """ build a small dataset contains only n objects with even class distribution.
         n: the number of objects
     """
     n = input("Please enter the number of objects: ")
     n = int(n)
-
     save_path = filepath.split("/")[-1]
-    save_path = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "test_small_" + save_path
+    if savepath == 0:
+        save_path = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "test_small_" + save_path
+    else:
+        save_path = savepath + "test_small_" + save_path
+
     cage_r, cage_ir = separate_classes(filepath)
     objects_r = check_objects(cage_r)
     objects_ir = check_objects(cage_ir)
@@ -189,10 +196,13 @@ if __name__ == '__main__':
     # datasetfile= str(sys.argv[1])
     flag = str(sys.argv[1])
     filepath = str(sys.argv[2])
+    savepath = 0
+    if len(sys.argv) > 3:
+        savepath = str(sys.argv[3])
     # filepath = "/Users/chingandywu/GRASP/data_gen/dataset_300_400.txt"
     if flag == "r":
-        rebuilt_dataset_2(filepath)
+        rebuilt_dataset_2(filepath, savepath)
     elif flag == "s":
-        built_small_dataset(filepath)
+        built_small_dataset(filepath, savepath)
     else:
         quit()
