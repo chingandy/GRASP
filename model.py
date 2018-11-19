@@ -68,18 +68,15 @@ label_dict = {
 # x_train = np.reshape(x_train,(-1,28,28,1))
 # print(x_train.shape)
 
+""" Hyperparameter setting"""
 training_iters = 100
 learning_rate = 0.001
-batch_size = 2
-
+batch_size = 128
 # MNIST data input (img shape: 28*28)
 n_input = 64 # in our case (img: 64*64)
-# MNIST total classes (0-9 digits)
-# n_classes = 10
 n_classes = 2
 
 # both placeholders are of type float
-# x = tf.placeholder("float", [None, 28,28,1])
 x = tf.placeholder("float", [None, 64,64,2])
 y = tf.placeholder("float", [None, n_classes])
 
@@ -170,7 +167,8 @@ test_dataset = "re_dataset_300_400.tfrecords"
 with tf.Session() as sess:
     sess.run(init)
     # Restore variables from disk.
-    save_path = "/Users/chingandywu/GRASP/checkpoint_4/"
+    # save_path = "/Users/chingandywu/GRASP/checkpoint_4/"
+    save_path = "./checkpoint_4/"
     if os.path.exists(save_path):
         saver.restore(sess, tf.train.latest_checkpoint(save_path))
         print("Model restored.")
@@ -228,7 +226,7 @@ with tf.Session() as sess:
         batch_x = batch_x/255
         batch_y = make_one_hot(batch_y)
 
-        opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 1.0})
+        opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 0.8})
         loss, acc = sess.run([cost, accuracy], feed_dict={x:batch_x, y:batch_y, keep_prob:1.0})
 
         print("Iter "+ str(i + step + 1) + ", Loss= " + "{:.6f}".format(loss) + ", Training Accuracy= " + "{:.5f}".format(acc))
