@@ -24,54 +24,11 @@ label_dict = {
 1: 'cage irrelevant',
 }
 
-# plt.figure(figsize=[5,5])
-#
-# # Display the first image in training data
-# plt.subplot(121)
-# # curr_img = np.reshape(data.train.images[0], (28,28))
-# curr_img = np.reshape(x_train[0], (28,28))
-# # curr_lbl = np.argmax(data.train.labels[0,:])
-# curr_lbl = y_train[0][0]
-# print("curr_lbl:", curr_lbl)
-# plt.imshow(curr_img, cmap="gray")
-# print(label_dict[curr_lbl])
-# plt.title("(Label:" + str(label_dict[curr_lbl]) + ")" )
-#
-# # Display the first image in testing data
-# plt.subplot(122)
-# # curr_img = np.reshape(data.test.images[0], (28,28))
-# # curr_lbl = np.argmax(data.test.labels[0,:])
-# curr_img = np.reshape(x_test[0], (28,28))
-# curr_lbl = y_test[0][0]
-# plt.imshow(curr_img, cmap="gray")
-# plt.title("(Label:" + str(label_dict[curr_lbl]) + ")")
-
-# plt.show()
-#
-#
-# """ Data Preprocessing """
-# print(data.train.images[0])
-# print(np.max(data.train.images[1]))
-# print(np.min(data.train.images[1]))
-#
-# # Reshpae training and testing image
-# train_x = data.train.images.reshape(-1,28,28,1)
-# test_x = data.test.images.reshape(-1,28,28,1)
-# print(train_x.shape)
-# print(test_x.shape)
-# train_y = data.train.labels
-# test_y = data.test.labels
-# print(train_y.shape)
-# print(test_y.shape)
-#
-# print("from fashion-mnist: ",x_train.shape)
-# x_train = np.reshape(x_train,(-1,28,28,1))
-# print(x_train.shape)
 
 """ Hyperparameter setting"""
-training_iters = 10
+training_iters = 100
 learning_rate = 0.001
-batch_size = 128
+batch_size = 2
 # MNIST data input (img shape: 28*28)
 n_input = 64 # in our case (img: 64*64)
 n_classes = 2
@@ -122,6 +79,8 @@ biases = {
 
 keep_prob = tf.placeholder(tf.float32)
 
+
+
 def conv_net(x, weights, biases):
 
     # here we call the conv2d function we had defined above and pass the input image x, weights wc1 and bias bc1.
@@ -162,18 +121,7 @@ def conv_net(x, weights, biases):
     return out
 
 
-# def input_fn(filename):
-#     # Read in the training and test data in tfrecords format
-#     filenames = tf.placeholder(tf.string, shape=[None])
-#     dataset = tf.data.TFRecordDataset(filenames)
-#
-#     # Map the parser over dataset, and batch results by up to batch_size
-#     dataset = dataset.map(parser,num_parallel_calls=None)
-#     dataset = dataset.batch(batch_size)
-#     dataset = dataset.repeat()
-#     iterator1 = dataset.make_initializable_iterator()
-#     iterator2 = dataset.make_initializable_iterator()
-#     return dataset
+
 
 global_step = tf.Variable(0, name='global_step', trainable=False)
 pred = conv_net(x, weights, biases)
@@ -190,10 +138,10 @@ init = tf.global_variables_initializer()
 
 saver = tf.train.Saver()
 
-training_dataset = "re_dataset_100_200.tfrecords"
-test_dataset = "re_dataset_300_400.tfrecords"
-# training_dataset = "small_dataset_100_200.tfrecords"
-# test_dataset = "test_small_dataset_100_200.tfrecords"
+# training_dataset = "re_dataset_100_200.tfrecords"
+# test_dataset = "re_dataset_300_400.tfrecords"
+training_dataset = "small_dataset_100_200.tfrecords"
+test_dataset = "test_small_dataset_300_400.tfrecords"
 
 with tf.Session() as sess:
     sess.run(init)
@@ -317,7 +265,7 @@ with tf.Session() as sess:
 
 
     summary_writer.close()
-    save_path = saver.save(sess, "/Users/chingandywu/GRASP/checkpoint_4/", global_step=global_step)
+    save_path = saver.save(sess, "/Users/chingandywu/GRASP/checkpoint_5/", global_step=global_step)
     print("Model saved in path: %s" % save_path)
 
 """ plot the training and test loss """
