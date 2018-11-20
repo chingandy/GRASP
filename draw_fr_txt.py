@@ -89,13 +89,32 @@ def rotate_img(img, angle):
 #     print("Obstacles: ", items[i],items[i+1])
 #     cv2.circle(img,(int(items[i]),int(items[i+1])), int(items[i+2]), (0,0,0), -1)
 #   return img
+def add_salt_pepper_noise(X_img):
+    # Need to produce a copy as to not modify the original image
+
+    row, col= X_img.shape
+    salt_vs_pepper = 0.2
+    amount = 0.004
+    num_salt = np.ceil(amount * (row*col) * salt_vs_pepper)
+    num_pepper = np.ceil(amount *(row*col) * (1.0 - salt_vs_pepper))
+
+
+    # Add Salt noise
+    coords = [np.random.randint(0, i - 1, int(num_salt)) for i in X_img.shape]
+    X_img[coords[0], coords[1]] = 1
+
+    # Add Pepper noise
+    coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in X_img.shape]
+    X_img[coords[0], coords[1]] = 0
+
+    return X_img
 
 
 print("Start")
   # DATASETNAME="Dataset_all_test"
   # DATA_DIR="./"
   # datasetfile = "Dataset_test.txt"
-filepath = "/Users/chingandywu/GRASP/rebuilt-dataset/small_dataset_100_200.txt"
+filepath = "/Users/chingandywu/GRASP/rebuilt-dataset/small_dataset_300_400.txt"
  #loop over all the lines
 counter = 0
 ccounter=0
@@ -187,6 +206,7 @@ for i in range(len(master_uni)):
   # plt.imshow(img3)
   # plt.subplot(1,4,4)
   img3 = np.arange(64*64,dtype=np.uint8).reshape(64,64)
+  salt_pepper_noise_imgs = add_salt_pepper_noise(img)
 
   # img3 = draw_object(img3, obj_c)
   print("img3: ", img3.dtype)
@@ -195,7 +215,7 @@ for i in range(len(master_uni)):
   plt.subplot(131)
   plt.imshow(img)
   plt.subplot(132)
-  plt.imshow(img2)
+  plt.imshow(salt_pepper_noise_imgs)
   plt.subplot(133)
   plt.imshow(img3)
   plt.show()
