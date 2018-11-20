@@ -144,17 +144,18 @@ def conv_net(x, weights, biases):
     return out
 
 
-def input_fn(filename):
-    # Read in the training and test data in tfrecords format
-    filenames = tf.placeholder(tf.string, shape=[None])
-    dataset = tf.data.TFRecordDataset(filenames)
-
-    # Map the parser over dataset, and batch results by up to batch_size
-    dataset = dataset.map(parser,num_parallel_calls=None)
-    dataset = dataset.batch(batch_size)
-    dataset = dataset.repeat()
-    iterator1 = dataset.make_initializable_iterator()
-    iterator2 = dataset.make_initializable_iterator()
+# def input_fn(filename):
+#     # Read in the training and test data in tfrecords format
+#     filenames = tf.placeholder(tf.string, shape=[None])
+#     dataset = tf.data.TFRecordDataset(filenames)
+#
+#     # Map the parser over dataset, and batch results by up to batch_size
+#     dataset = dataset.map(parser,num_parallel_calls=None)
+#     dataset = dataset.batch(batch_size)
+#     dataset = dataset.repeat()
+#     iterator1 = dataset.make_initializable_iterator()
+#     iterator2 = dataset.make_initializable_iterator()
+#     return dataset
 
 global_step = tf.Variable(0, name='global_step', trainable=False)
 pred = conv_net(x, weights, biases)
@@ -188,16 +189,18 @@ with tf.Session() as sess:
     step = global_step.eval(session=sess)
     print("#########################Global Step: ", step)
 
-    # # Read in the training and test data in tfrecords format
-    # filenames = tf.placeholder(tf.string, shape=[None])
-    # dataset = tf.data.TFRecordDataset(filenames)
-    #
-    # # Map the parser over dataset, and batch results by up to batch_size
-    # dataset = dataset.map(parser,num_parallel_calls=None)
+    # Read in the training and test data in tfrecords format
+    filenames = tf.placeholder(tf.string, shape=[None])
+    dataset = tf.data.TFRecordDataset(filenames)
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    # dataset = dataset.map(parser,num_parallel_calls=2) # depends on the number of cores of your cpu 
     # dataset = dataset.batch(batch_size)
-    # dataset = dataset.repeat()
-    # iterator1 = dataset.make_initializable_iterator()
-    # iterator2 = dataset.make_initializable_iterator()
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(map_func=parser, batch_size=batch_size))
+    dataset = dataset.prefetch(buffer_size=batch_size) # optimize the input pipeline
+    dataset = dataset.repeat()
+    iterator1 = dataset.make_initializable_iterator()
+    iterator2 = dataset.make_initializable_iterator()
 
 
     # training_filenames = [os.path.join(DATASETNAME +'.tfrecords')]

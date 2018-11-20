@@ -190,7 +190,7 @@ if __name__ == '__main__':
     print(sys.argv)
 
     if(len(sys.argv) < 3):
-        print('usage: gentf.py [r/s] <.txt file>, where <.txt file> is the file you want to preprocess')
+        print('usage: preprcs.py [r/s] <.txt file> <save path>, where <.txt file> is the file you want to preprocess')
         quit()
 
     # datasetfile= str(sys.argv[1])

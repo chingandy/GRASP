@@ -161,7 +161,7 @@ for i in range(len(master_uni)):
   #make image
   namech1,namech2,trainlable,obj_c,obs_c = master_uni[i]
 
-  img = np.ones((64,64), np.uint8)
+  img = np.ones((64,64), np.uint8)*255
 
   print("img: ", img.dtype)
   img= draw_object(img,obj_c)
@@ -173,7 +173,7 @@ for i in range(len(master_uni)):
   # # img2 = np.ones((64,64), np.uint8)*255
   # img2= draw_obstacles(img2,obs_c, center, deg=180)
 
-  img2 = rotate_img(img, 30)
+  img2 = rotate_img(img, 90)
 
   # img3 = np.ones((64,64), np.uint8)*255
   # img3 = draw_object(img,obj_c)
