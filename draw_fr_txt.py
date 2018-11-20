@@ -47,6 +47,18 @@ def draw_obstacles(img,obs_c):
             cv2.circle(img,(int(items[i]),int(items[i+1])), int(items[i+2]), (0,0,0), -1)
     return img
 
+def draw_object_t(img,obj_c):
+  items=obj_c
+  for i in range(1,(int(items[0]))*3,3):
+      cv2.circle(img,(int(items[i]),int(items[i+1])), int(items[i+2]), (1,2,1), -1)
+  return img
+
+def draw_obstacles_t(img,obs_c):
+    items=obs_c.split(",")[1:-1]
+    for i in range(1,(int(items[0]))*3,3):
+            cv2.circle(img,(int(items[i]),int(items[i+1])), int(items[i+2]), (1,2,1), -1)
+    return img
+
 def rotate_img(img, angle):
 
     rows,cols = img.shape
@@ -149,7 +161,9 @@ for i in range(len(master_uni)):
   #make image
   namech1,namech2,trainlable,obj_c,obs_c = master_uni[i]
 
-  img = np.ones((64,64), np.uint8)*255
+  img = np.ones((64,64), np.uint8)
+
+  print("img: ", img.dtype)
   img= draw_object(img,obj_c)
   # img2 = np.ones((64,64), np.uint8)*255
   img= draw_obstacles(img,obs_c)
@@ -161,7 +175,9 @@ for i in range(len(master_uni)):
 
   img2 = rotate_img(img, 30)
 
-
+  # img3 = np.ones((64,64), np.uint8)*255
+  # img3 = draw_object(img,obj_c)
+  # img3 = draw_obstacles(img,obs_c)
   # plt.imshow(img)
   # plt.subplot(1, 4, 1)
   # plt.imshow(img)
@@ -170,8 +186,16 @@ for i in range(len(master_uni)):
   # plt.subplot(1,4,3)
   # plt.imshow(img3)
   # plt.subplot(1,4,4)
-  plt.subplot(121)
+  img3 = np.arange(64*64,dtype=np.uint8).reshape(64,64)
+
+  # img3 = draw_object(img3, obj_c)
+  print("img3: ", img3.dtype)
+  img3 = draw_object(img3, obj_c)
+  img3 = draw_obstacles(img3, obs_c)
+  plt.subplot(131)
   plt.imshow(img)
-  plt.subplot(122)
+  plt.subplot(132)
   plt.imshow(img2)
+  plt.subplot(133)
+  plt.imshow(img3)
   plt.show()

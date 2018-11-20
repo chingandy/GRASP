@@ -69,7 +69,7 @@ label_dict = {
 # print(x_train.shape)
 
 """ Hyperparameter setting"""
-training_iters = 100
+training_iters = 10
 learning_rate = 0.001
 batch_size = 128
 # MNIST data input (img shape: 28*28)
@@ -144,6 +144,18 @@ def conv_net(x, weights, biases):
     return out
 
 
+def input_fn(filename):
+    # Read in the training and test data in tfrecords format
+    filenames = tf.placeholder(tf.string, shape=[None])
+    dataset = tf.data.TFRecordDataset(filenames)
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    dataset = dataset.map(parser,num_parallel_calls=None)
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.repeat()
+    iterator1 = dataset.make_initializable_iterator()
+    iterator2 = dataset.make_initializable_iterator()
+
 global_step = tf.Variable(0, name='global_step', trainable=False)
 pred = conv_net(x, weights, biases)
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
@@ -176,16 +188,16 @@ with tf.Session() as sess:
     step = global_step.eval(session=sess)
     print("#########################Global Step: ", step)
 
-    # Read in the training and test data in tfrecords format
-    filenames = tf.placeholder(tf.string, shape=[None])
-    dataset = tf.data.TFRecordDataset(filenames)
-
-    # Map the parser over dataset, and batch results by up to batch_size
-    dataset = dataset.map(parser,num_parallel_calls=None)
-    dataset = dataset.batch(batch_size)
-    dataset = dataset.repeat()
-    iterator1 = dataset.make_initializable_iterator()
-    iterator2 = dataset.make_initializable_iterator()
+    # # Read in the training and test data in tfrecords format
+    # filenames = tf.placeholder(tf.string, shape=[None])
+    # dataset = tf.data.TFRecordDataset(filenames)
+    #
+    # # Map the parser over dataset, and batch results by up to batch_size
+    # dataset = dataset.map(parser,num_parallel_calls=None)
+    # dataset = dataset.batch(batch_size)
+    # dataset = dataset.repeat()
+    # iterator1 = dataset.make_initializable_iterator()
+    # iterator2 = dataset.make_initializable_iterator()
 
 
     # training_filenames = [os.path.join(DATASETNAME +'.tfrecords')]
