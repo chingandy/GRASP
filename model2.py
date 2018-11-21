@@ -7,6 +7,20 @@ from data import parser
 import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
+""" DATA SET SETTING """
+training_dataset = "re_dataset_100_200.tfrecords"
+test_dataset = "re_dataset_300_400.tfrecords"
+
+
+""" Hyperparameter setting"""
+training_iters = 1000
+learning_rate = 0.001
+batch_size = 128
+
+
+
+n_input = 64 # in our case (img: 64*64)
+n_classes = 2
 def make_one_hot(dataset):
     new_dataset = []
     for e in dataset:
@@ -16,6 +30,29 @@ def make_one_hot(dataset):
         new_dataset.append(vec)
     return np.array(new_dataset)
 
+def save_images(train_loss, test_loss, train_accuracy, test_accuracy, iter):
+
+    """ plot the training and test loss """
+    plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
+    plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
+    plt.title("Training and Test loss")
+    plt.xlabel("Epochs ", fontsize=16)
+    plt.ylabel("Loss ", fontsize=16)
+    plt.legend()
+    plt.savefig('fig/loss-' + str(iter + step + 1) + '.png')
+    plt.clf()
+
+
+    """ plot the trainng and test accuracy """
+    plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
+    plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
+    plt.title("Training and Test Accuracy")
+    plt.xlabel("Epochs ", fontsize=16)
+    plt.ylabel("Accuracy ", fontsize=16)
+    plt.legend()
+    plt.savefig('fig/accuracy-' + str(iter + step + 1) + '.png')
+    plt.clf()
+
 
 
 # Create dictionary of target classes
@@ -24,14 +61,6 @@ label_dict = {
 1: 'cage irrelevant',
 }
 
-
-""" Hyperparameter setting"""
-training_iters = 100
-learning_rate = 0.001
-batch_size = 2
-# MNIST data input (img shape: 28*28)
-n_input = 64 # in our case (img: 64*64)
-n_classes = 2
 
 # both placeholders are of type float
 x = tf.placeholder("float", [None, 64,64,2])
@@ -138,16 +167,11 @@ init = tf.global_variables_initializer()
 
 saver = tf.train.Saver()
 
-# training_dataset = "re_dataset_100_200.tfrecords"
-# test_dataset = "re_dataset_300_400.tfrecords"
-training_dataset = "small_dataset_100_200.tfrecords"
-test_dataset = "test_small_dataset_300_400.tfrecords"
-
 with tf.Session() as sess:
     sess.run(init)
     # Restore variables from disk.
     # save_path = "/Users/chingandywu/GRASP/checkpoint_4/"
-    save_path = "./checkpoint_5/"
+    save_path = "./checkpoint_0/"
     if os.path.exists(save_path):
         saver.restore(sess, tf.train.latest_checkpoint(save_path))
         print("Model restored.")
@@ -185,7 +209,6 @@ with tf.Session() as sess:
     # else:
     #     print('train_images is not equal test_images')
 
-
     train_loss = []
     test_loss = []
     train_accuracy = []
@@ -195,12 +218,7 @@ with tf.Session() as sess:
 
     for i in range(training_iters):
 
-        # sess.run([train_op,increment_global_step],feed_dict=feed_dict)
-        # if accuracy < 0.9:
-            # batch_x = x_train[batch*batch_size:min((batch+1)*batch_size,len(x_train))]
-            # batch_y = y_train[batch*batch_size:min((batch+1)*batch_size,len(y_train))]
-            # # Run optimization op (backprop)
-            # calculate batch loss and accuracy
+
         # traing data in a batch
         batch_x, batch_y = sess.run([train_images, train_labels])
         # data preprocessing
@@ -221,39 +239,33 @@ with tf.Session() as sess:
         y_test = make_one_hot(y_test)
 
         """ show training images and test images"""
-        if i < 2:
-
-            plt.subplot(221)
-            img = (batch_x[0,:,:,0] + batch_x[0,:,:,1])/2.0
-            plt.imshow(img)
-            label = np.nonzero(batch_y[0,:])[0][0]
-            plt.title("label: "+ label_dict[label])
-
-            plt.subplot(222)
-            img = (batch_x[1,:,:,0] + batch_x[1,:,:,1])/2.0
-            plt.imshow(img)
-            label = np.nonzero(batch_y[1,:])[0][0]
-            plt.title("label: "+ label_dict[label])
-
-            plt.subplot(223)
-            img = (x_test[0,:,:,0] + x_test[0,:,:,1])/2.0
-            plt.imshow(img)
-            label = np.nonzero(y_test[0,:])[0][0]
-            plt.title("label: "+ label_dict[label])
-
-            plt.subplot(224)
-            img = (x_test[1,:,:,0] + x_test[1,:,:,1])/2.0
-            plt.imshow(img)
-            label = np.nonzero(y_test[1,:])[0][0]
-            plt.title("label: "+ label_dict[label])
-            plt.tight_layout()
-            plt.show()
-
-
-        # print("batch_x: \n", type(batch_x), batch_x.shape)
-        # print("batch_y: \n", type(batch_y), batch_y.shape)
-        # print("x_test: \n", type(x_test), x_test.shape)
-        # print("y_test: \n", type(y_test), y_test.shape)
+        # if i < 2:
+        #
+        #     plt.subplot(221)
+        #     img = (batch_x[0,:,:,0] + batch_x[0,:,:,1])/2.0
+        #     plt.imshow(img)
+        #     label = np.nonzero(batch_y[0,:])[0][0]
+        #     plt.title("label: "+ label_dict[label])
+        #
+        #     plt.subplot(222)
+        #     img = (batch_x[1,:,:,0] + batch_x[1,:,:,1])/2.0
+        #     plt.imshow(img)
+        #     label = np.nonzero(batch_y[1,:])[0][0]
+        #     plt.title("label: "+ label_dict[label])
+        #
+        #     plt.subplot(223)
+        #     img = (x_test[0,:,:,0] + x_test[0,:,:,1])/2.0
+        #     plt.imshow(img)
+        #     label = np.nonzero(y_test[0,:])[0][0]
+        #     plt.title("label: "+ label_dict[label])
+        #
+        #     plt.subplot(224)
+        #     img = (x_test[1,:,:,0] + x_test[1,:,:,1])/2.0
+        #     plt.imshow(img)
+        #     label = np.nonzero(y_test[1,:])[0][0]
+        #     plt.title("label: "+ label_dict[label])
+        #     plt.tight_layout()
+        #     plt.show()
 
         test_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
         train_loss.append(loss)
@@ -262,27 +274,32 @@ with tf.Session() as sess:
         test_accuracy.append(test_acc)
         print("Testing Accuracy:", "{:.5f}".format(test_acc))
 
+        if i % 100 == 0:
+            save_images(train_loss, test_loss, train_accuracy, test_accuracy, i)
+
 
 
     summary_writer.close()
-    save_path = saver.save(sess, "/Users/chingandywu/GRASP/checkpoint_5/", global_step=global_step)
+    save_path = saver.save(sess, "/Users/chingandywu/GRASP/checkpoint_0/", global_step=global_step)
     print("Model saved in path: %s" % save_path)
 
-""" plot the training and test loss """
-plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
-plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
-plt.title("Training and Test loss")
-plt.xlabel("Epochs ", fontsize=16)
-plt.ylabel("Loss ", fontsize=16)
-plt.legend()
-plt.show()
-
-""" plot the trainng and test accuracy """
-plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
-plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
-plt.title("Training and Test Accuracy")
-plt.xlabel("Epochs ", fontsize=16)
-plt.ylabel("Accuracy ", fontsize=16)
-plt.legend()
-
-plt.show()
+# """ plot the training and test loss """
+# plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
+# plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
+# plt.title("Training and Test loss")
+# plt.xlabel("Epochs ", fontsize=16)
+# plt.ylabel("Loss ", fontsize=16)
+# plt.legend()
+# plt.savefig('fig/loss.png')
+# plt.show()
+#
+#
+# """ plot the trainng and test accuracy """
+# plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
+# plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
+# plt.title("Training and Test Accuracy")
+# plt.xlabel("Epochs ", fontsize=16)
+# plt.ylabel("Accuracy ", fontsize=16)
+# plt.legend()
+# plt.savefig('fig/accuracy.png')
+# plt.show()
