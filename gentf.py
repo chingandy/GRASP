@@ -1,4 +1,3 @@
-
 """Converts image data to TFRecords file format with Example protos.
 
 """
@@ -30,6 +29,7 @@ import tensorflow as tf
 import autolab_core.utils as utils
 from autolab_core.constants import *
 from autolab_core import TensorDataset, YamlConfig
+from image_augmentation import augment_img
 
 
 # sys.path.append('/usr/local/lib/python2.7/site-packages')
@@ -178,32 +178,164 @@ def main():
 
 
   #save trainset
-  print("************************Building Training set ********************")
-  print("size: " + str(len(master_uni)))
+  print("************************Convert txt into TFrecord ********************")
+  dataset_size = len(master_data_nc) + len(master_data_cage)
+  print("Original size: ", dataset_size)
+  print("Cage irrelevant: ", len(master_data_nc))
+  print("Cage relevant: ", len(master_data_cage))
+
+  dataset_size = len(master_data_nc) + len(master_data_cage) * 72
+  print("\nSize after augmentation : ", dataset_size)
+  print("Cage irrelevant: ", len(master_data_nc))
+  print("Cage relevant: ", len(master_data_cage)*72)
+  if len(master_data_nc) != len(master_data_cage)*72:
+      print("The data set is still uneven! But we will see.\n")
+
+
+
   random.shuffle(master_uni)
-  name="nothing"
-  img = np.ones((64,64), np.uint8)*255
-  cv2.circle(img,(32,32), 8, (0,0,0), -1)
+  # name="nothing"
+  # img = np.ones((64,64), np.uint8)*255
+  # cv2.circle(img,(32,32), 8, (0,0,0), -1)
+  #
+  # for i in range(len(master_data_nc)):
+  #
+  #   #make image
+  #   namech1,namech2,trainlable,obj_c,obs_c = master_data_nc[i]
+  #
+  #   img = np.ones((64,64), np.uint8)*255
+  #   img = draw_object(img,obj_c)
+  #   img2 = np.ones((64,64), np.uint8)*255
+  #   img2= draw_obstacles(img2,obs_c)
+  #
+  #   # image_data64 = np.stack((img,)*2, -1)
+  #   # image_data64[:,:,1]=img2
+  #   image_data64 = np.stack((img, img2), -1)
+  #   name=namech2
+  #   tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
+  #   writer.write(tf_example.SerializeToString())
+  #   counter += 1
+  #
+  #   if counter % 10000 == 0:
+  #       print("Percent done", (counter/dataset_size*100))
+  #
+  # for i in range(len(master_data_cage)):
+  #
+  #   #make image
+  #   namech1,namech2,trainlable,obj_c,obs_c = master_data_cage[i]
+  #
+  #   # the options of each operations
+  #   translation_ops = [0,1,2,3,4,5,6,7,8]
+  #   flip_ops = [0,1]
+  #   rotation_ops = [0,1,2,3]
+  #
+  #   for t in translation_ops:
+  #     for f in flip_ops:
+  #         for r in rotation_ops:
+  #
+  #             img = np.ones((64,64), np.uint8)*255
+  #             img = draw_object(img,obj_c)
+  #             img2 = np.ones((64,64), np.uint8)*255
+  #             img2= draw_obstacles(img2,obs_c)
+  #             img = augment_img(img, t, f, r)
+  #             img2 = augment_img(img2, t, f, r)
+  #
+  #             image_data64 = np.stack((img, img2), -1)
+  #             name=namech2
+  #             tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
+  #             writer.write(tf_example.SerializeToString())
+  #             counter += 1
+  #
+  #   if counter % 10000 == 0:
+  #       print("Percent done", (counter/dataset_size*100))
+  examples = []
   for i in range(len(master_uni)):
 
-    #make image
-    namech1,namech2,trainlable,obj_c,obs_c = master_uni[i]
+      #make image
+      namech1,namech2,trainlable,obj_c,obs_c = master_uni[i]
 
-    img = np.ones((64,64), np.uint8)*255
-    img = draw_object(img,obj_c)
-    img2 = np.ones((64,64), np.uint8)*255
-    img2= draw_obstacles(img2,obs_c)
+      if trainlable == 0:
+           # the options of each operations
+           translation_ops = [0,1,2,3,4,5,6,7,8]
+           flip_ops = [0,1]
+           rotation_ops = [0,1,2,3]
 
-    # image_data64 = np.stack((img,)*2, -1)
-    # image_data64[:,:,1]=img2
-    image_data64 = np.stack((img, img2), -1)
-    name=namech2
-    tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
-    writer.write(tf_example.SerializeToString())
-    counter += 1
+           for t in translation_ops:
+             for f in flip_ops:
+                 for r in rotation_ops:
 
-    if counter % 10000 == 0:
-      print("Percent done", (counter/len(master_uni)*100))
+                     img = np.ones((64,64), np.uint8)*255
+                     img = draw_object(img,obj_c)
+                     img2 = np.ones((64,64), np.uint8)*255
+                     img2= draw_obstacles(img2,obs_c)
+                     img = augment_img(img, t, f, r)
+                     img2 = augment_img(img2, t, f, r)
+
+                     image_data64 = np.stack((img, img2), -1)
+                     name=namech2
+                     examples.append([name,namech1,namech2,image_data64,trainlable])
+                     # tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
+                     # writer.write(tf_example.SerializeToString())
+                     # counter += 1
+                     # if counter % 10000 == 0:
+                     #     print("Percent done", (counter/dataset_size*100))
+
+      elif trainlable == 1:
+          img = np.ones((64,64), np.uint8)*255
+          img = draw_object(img,obj_c)
+          img2 = np.ones((64,64), np.uint8)*255
+          img2= draw_obstacles(img2,obs_c)
+
+          # image_data64 = np.stack((img,)*2, -1)
+          # image_data64[:,:,1]=img2
+          image_data64 = np.stack((img, img2), -1)
+          name=namech2
+          examples.append([name,namech1,namech2,image_data64,trainlable])
+          # tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
+          # writer.write(tf_example.SerializeToString())
+          # counter += 1
+          #
+          # if counter % 10000 == 0:
+          #     print("Percent done", (counter/dataset_size*100))
+
+      else:
+          print("SOMETHING WENT WRONG.")
+
+  shuffle(examples)
+  for name,namech1,namech2,image_data64,trainlable in examples:
+      
+      tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
+      writer.write(tf_example.SerializeToString())
+      counter += 1
+
+      if counter % 10000 == 0:
+          print("Percent done", (counter/dataset_size*100))
+
+
+
+
+
+  # for i in range(len(master_uni)):
+  #
+  #   #make image
+  #   namech1,namech2,trainlable,obj_c,obs_c = master_uni[i]
+  #
+  #   img = np.ones((64,64), np.uint8)*255
+  #   img = draw_object(img,obj_c)
+  #   img2 = np.ones((64,64), np.uint8)*255
+  #   img2= draw_obstacles(img2,obs_c)
+  #
+  #   # image_data64 = np.stack((img,)*2, -1)
+  #   # image_data64[:,:,1]=img2
+  #   image_data64 = np.stack((img, img2), -1)
+  #   name=namech2
+  #   tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
+  #   writer.write(tf_example.SerializeToString())
+  #   counter += 1
+  #
+  #   if counter % 10000 == 0:
+  #     print("Percent done", (counter/len(master_uni)*100))
+
 
 
   print("saved: " + str(counter))

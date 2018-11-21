@@ -134,8 +134,9 @@ def rebuilt_dataset_2(filepath, savepath):
 
             pool = cycle(cage_r)
             count = 0
+            size_aug_ind = 72
             for e in pool:
-                if count < rebuilt_size:
+                if count < rebuilt_size/size_aug_ind:
                     w.write(','.join(e))
                     count += 1
                 else:

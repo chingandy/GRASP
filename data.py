@@ -156,8 +156,70 @@ def read_dataset_(DATASETNAME):
       label_set = np.array(label_set)
       return image_set, label_set
 
+""" data augmentation """
+
+def rotate_img(img, angle):
+
+    rows,cols = img.shape
+    M = cv2.getRotationMatrix2D((cols/2,rows/2),angle,1)
+    dst = cv2.warpAffine(img,M,(cols,rows))
+    dst[0,:] = 255
+    dst[:,0] = 255
+
+    return dst
+
+def add_salt_pepper_noise(img):
+    # Need to produce a copy as to not modify the original image
+    X_img = np.copy(img)
+    row, col= X_img.shape
+    salt_vs_pepper = 0.2
+    amount = 0.004
+    num_salt = np.ceil(amount * (row*col) * salt_vs_pepper)
+    num_pepper = np.ceil(amount *(row*col) * (1.0 - salt_vs_pepper))
 
 
+    # Add Salt noise
+    coords = [np.random.randint(0, i - 1, int(num_salt)) for i in X_img.shape]
+    X_img[coords[0], coords[1]] = 1
+
+    # Add Pepper noise
+    coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in X_img.shape]
+    X_img[coords[0], coords[1]] = 0
+
+    return X_img
+
+#Move picture one pixel to the right
+def translate_right(img):
+    rows,cols = img.shape
+    M = np.float32([[1,0,3],[0,1,0]])
+    translated_img = cv2.warpAffine(img,M,(cols,rows))
+    translated_img[:,0:3] = 255
+    return translated_img
+
+
+#Move picture one pixel to the left
+def translate_left(img):
+    rows,cols = img.shape
+    M = np.float32([[1,0,-3],[0,1,0]])
+    translated_img = cv2.warpAffine(img,M,(cols,rows))
+    translated_img[:,61:64] = 255
+    return translated_img
+
+#Move picture one pixel up
+def translate_up(img):
+    rows,cols = img.shape
+    M = np.float32([[1,0,0],[0,1,-3]])
+    translated_img = cv2.warpAffine(img,M,(cols,rows))
+    translated_img[61:64,:] = 255
+    return translated_img
+
+#Move picture one pixel down
+def translate_down(img):
+    rows,cols = img.shape
+    M = np.float32([[1,0,0],[0,1,3]])
+    translated_img = cv2.warpAffine(img,M,(cols,rows))
+    translated_img[0:3,:] = 255
+    return translated_img
 def main():
     # DATASETNAME = "Data_science_dataset/Dataset_all_test"
     DATASETNAME = "/Users/chingandywu/GRASP/dataset_100_200"

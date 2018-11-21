@@ -5,7 +5,7 @@ import cv2
 import random
 from random import shuffle
 from math import sin, cos, pi
-
+from image_augmentation import augment_img
 
 # def draw_object(img,obj_c, deg=0):
 #     items=obj_c
@@ -89,9 +89,9 @@ def rotate_img(img, angle):
 #     print("Obstacles: ", items[i],items[i+1])
 #     cv2.circle(img,(int(items[i]),int(items[i+1])), int(items[i+2]), (0,0,0), -1)
 #   return img
-def add_salt_pepper_noise(X_img):
+def add_salt_pepper_noise(img):
     # Need to produce a copy as to not modify the original image
-
+    X_img = np.copy(img)
     row, col= X_img.shape
     salt_vs_pepper = 0.2
     amount = 0.004
@@ -109,12 +109,24 @@ def add_salt_pepper_noise(X_img):
 
     return X_img
 
+def augment_data(img,n,r):
+    if n == 0:
+        pass
+    elif n == 1:
+        img = add_salt_pepper_noise(img)
+    if r == 0 :
+        pass
+    elif r == 1:
+        img = rotate_img(img, angle=90)
+
+    return img
+
 
 print("Start")
   # DATASETNAME="Dataset_all_test"
   # DATA_DIR="./"
   # datasetfile = "Dataset_test.txt"
-filepath = "/Users/chingandywu/GRASP/rebuilt-dataset/small_dataset_300_400.txt"
+filepath = "/Users/chingandywu/GRASP/rebuilt-dataset/test_small_dataset_300_400.txt"
  #loop over all the lines
 counter = 0
 ccounter=0
@@ -142,28 +154,8 @@ if(os.path.isfile(filepath)):
       namech2=items[1]
 
       trainlabel=int(items[4])
-      # if trainlabel==0:
-      #   master_data_cage.append([namech1,namech2,trainlabel,obj_c,obs_c])
-      # if trainlabel==1:
-      #   master_data_nc.append([namech1,namech2,trainlabel,obj_c,obs_c])
       master_uni.append([namech1,namech2,trainlabel,obj_c,obs_c])
 
-
-
-#What do we got:
-# print( "  # data set sizo cage-relevant: " + str(len(master_data_cage)) + " and cage-irrelevant: " + str(len(master_data_nc)) )
-# shuffle(master_data_cage)
-
-
-#fill master uin with caged
-#
-# for j in range(len(master_data_cage)):
-#   namech1,namech2,trainlable,obj_c,obs_c=master_data_cage[j]
-#   master_uni.append([namech1,namech2,trainlable,obj_c,obs_c])
-#
-# for i in range(len(master_data_nc)):
-#   namech1,namech2,trainlable,obj_c,obs_c=master_data_nc[i]
-#   master_uni.append([namech1,namech2,trainlable,obj_c,obs_c])
 
 
 #save trainset
@@ -181,41 +173,27 @@ for i in range(len(master_uni)):
   namech1,namech2,trainlable,obj_c,obs_c = master_uni[i]
 
   img = np.ones((64,64), np.uint8)*255
-
-  print("img: ", img.dtype)
   img= draw_object(img,obj_c)
-  # img2 = np.ones((64,64), np.uint8)*255
   img= draw_obstacles(img,obs_c)
+  # img2 = rotate_img(img, 90)
+  # img3 = add_salt_pepper_noise(img)
+  img2 = augment_img(img, 1,0,0)
+  img3 = augment_img(img, 1, 1,0)
+  img4 = augment_img(img,1,1,1)
 
-  # img2 = np.ones((64,64), np.uint8)*255
-  # img2, center = draw_object(img2,obj_c, deg=180)
-  # # img2 = np.ones((64,64), np.uint8)*255
-  # img2= draw_obstacles(img2,obs_c, center, deg=180)
-
-  img2 = rotate_img(img, 90)
-
-  # img3 = np.ones((64,64), np.uint8)*255
-  # img3 = draw_object(img,obj_c)
-  # img3 = draw_obstacles(img,obs_c)
-  # plt.imshow(img)
-  # plt.subplot(1, 4, 1)
-  # plt.imshow(img)
-  # plt.subplot(1, 4, 2)
-  # plt.imshow(img2)
-  # plt.subplot(1,4,3)
-  # plt.imshow(img3)
-  # plt.subplot(1,4,4)
-  img3 = np.arange(64*64,dtype=np.uint8).reshape(64,64)
-  salt_pepper_noise_imgs = add_salt_pepper_noise(img)
-
-  # img3 = draw_object(img3, obj_c)
-  print("img3: ", img3.dtype)
-  img3 = draw_object(img3, obj_c)
-  img3 = draw_obstacles(img3, obs_c)
-  plt.subplot(131)
+  plt.subplot(141)
   plt.imshow(img)
-  plt.subplot(132)
-  plt.imshow(salt_pepper_noise_imgs)
-  plt.subplot(133)
+  plt.title("Original")
+
+  plt.subplot(142)
+  plt.imshow(img2)
+  plt.title("Rotate 90")
+
+  plt.subplot(143)
   plt.imshow(img3)
+  plt.title("Noise")
+
+  plt.subplot(144)
+  plt.imshow(img4)
+  plt.title("Noise")
   plt.show()
