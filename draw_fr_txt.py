@@ -118,6 +118,18 @@ def augment_img(img, rot, flip, translate):
         aug_img = translate_up(img)
     elif translate == 4:
         aug_img = translate_down(img)
+    elif translate == 5:
+        aug_img = translate_right(img)
+        aug_img = translate_up(aug_img)
+    elif translate == 6:
+        aug_img = translate_right(img)
+        aug_img = translate_down(aug_img)
+    elif translate == 7:
+        aug_img = translate_left(img)
+        aug_img = translate_up(aug_img)
+    elif translate == 8:
+        aug_img = translate_left(img)
+        aug_img = translate_down(aug_img)
     else: 
         print("Not valid argument for translation")
 
