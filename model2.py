@@ -10,9 +10,9 @@ import os
 """ DATA SET SETTING """
 # training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
 # test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
-training_dataset = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_100_200.txt"
-test_dataset = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_300_400.txt"
-save_path = "./checkpoint_new/"
+training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200.tfrecords"
+test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400.tfrecords"
+save_path = "./checkpoint_new"
 
 """ Hyperparameter setting"""
 training_iters = 100
