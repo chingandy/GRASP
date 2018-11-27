@@ -151,8 +151,8 @@ def rebuilt_dataset_split(filepath, savepath):
         save_path_2 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + save_path + "_test"
 
     else:
-        save_pat_1 = savepath + "re_" + save_path + "_train"
-        save_path_2 = savepath + "re_" + save_path + "_test"
+        save_pat_1 = savepath + "train_re_" + save_path
+        save_path_2 = savepath + "test_re_" + save_path
 
     cage_r, cage_ir = separate_classes(filepath)
 
