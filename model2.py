@@ -8,12 +8,14 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
 """ DATA SET SETTING """
-training_dataset = "re_dataset_100_200.tfrecords"
-test_dataset = "re_dataset_300_400.tfrecords"
-
+# training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
+# test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
+training_dataset = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_100_200.txt"
+test_dataset = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_300_400.txt"
+save_path = "./checkpoint_new/"
 
 """ Hyperparameter setting"""
-training_iters = 1000
+training_iters = 100
 learning_rate = 0.001
 batch_size = 128
 
@@ -39,7 +41,7 @@ def save_images(train_loss, test_loss, train_accuracy, test_accuracy, iter):
     plt.xlabel("Epochs ", fontsize=16)
     plt.ylabel("Loss ", fontsize=16)
     plt.legend()
-    plt.savefig('fig/loss-' + str(iter + step + 1) + '.png')
+    plt.savefig('fig2/loss-' + str(iter + step + 1) + '.png')
     plt.clf()
 
 
@@ -50,7 +52,7 @@ def save_images(train_loss, test_loss, train_accuracy, test_accuracy, iter):
     plt.xlabel("Epochs ", fontsize=16)
     plt.ylabel("Accuracy ", fontsize=16)
     plt.legend()
-    plt.savefig('fig/accuracy-' + str(iter + step + 1) + '.png')
+    plt.savefig('fig2/accuracy-' + str(iter + step + 1) + '.png')
     plt.clf()
 
 
@@ -171,49 +173,44 @@ with tf.Session() as sess:
     sess.run(init)
     # Restore variables from disk.
     # save_path = "/Users/chingandywu/GRASP/checkpoint_4/"
-    save_path = "./checkpoint_0/"
+    # save_path = "./checkpoint_0/"
     if os.path.exists(save_path):
         saver.restore(sess, tf.train.latest_checkpoint(save_path))
         print("Model restored.")
 
     step = global_step.eval(session=sess)
-    print("#########################Global Step: ", step)
+    print("############Global Step: ", step, "############")
 
     # Read in the training and test data in tfrecords format
     filenames = tf.placeholder(tf.string, shape=[None])
     dataset = tf.data.TFRecordDataset(filenames)
-
     # Map the parser over dataset, and batch results by up to batch_size
     # dataset = dataset.map(parser,num_parallel_calls=2) # depends on the number of cores of your cpu
     # dataset = dataset.batch(batch_size)
     dataset = dataset.apply(tf.contrib.data.map_and_batch(map_func=parser, batch_size=batch_size))
     dataset = dataset.prefetch(buffer_size=batch_size) # optimize the input pipeline
     dataset = dataset.repeat()
-    iterator1 = dataset.make_initializable_iterator()
-    iterator2 = dataset.make_initializable_iterator()
+    # iterator1 = dataset.make_initializable_iterator()
+    iterator = dataset.make_initializable_iterator()
 
 
-    # training_filenames = [os.path.join(DATASETNAME +'.tfrecords')]
-    # training_dataset = "re_dataset_100_200.tfrecords"
-    # training_dataset = "small_dataset_100_200.tfrecords"
-    sess.run(iterator1.initializer, feed_dict={filenames:[training_dataset]})
-    train_images, train_labels, filename,f1,f2 = iterator1.get_next()
-    # test_dataset = "re_dataset_300_400.tfrecords"
-    # test_dataset = "test_small_dataset_100_200.tfrecords"
-    sess.run(iterator2.initializer, feed_dict={filenames:[test_dataset]})
-    test_images, test_labels, filename,f1,f2 = iterator2.get_next()
+    sess.run(iterator.initializer, feed_dict={filenames:[training_dataset]})
+    train_images, train_labels, filename,f1,f2 = iterator.get_next()
 
-    # """ check if training data is different from test data"""
-    # if sess.run(tf.reduce_all(tf.equal(train_images, test_images))):
-    #     print('train_images is equal test_images')
-    # else:
-    #     print('train_images is not equal test_images')
+    sess.run(iterator.initializer, feed_dict={filenames:[test_dataset]})
+    test_images, test_labels, filename,f1,f2 = iterator.get_next()
+
+    """ check if training data is different from test data"""
+    if sess.run(tf.reduce_all(tf.equal(train_images, test_images))):
+        print('train_images is equal test_images')
+    else:
+        print('train_images is not equal test_images')
 
     train_loss = []
     test_loss = []
     train_accuracy = []
     test_accuracy = []
-    summary_writer = tf.summary.FileWriter('./Output', sess.graph)
+    summary_writer = tf.summary.FileWriter('./output', sess.graph)
 
 
     for i in range(training_iters):
@@ -274,32 +271,32 @@ with tf.Session() as sess:
         test_accuracy.append(test_acc)
         print("Testing Accuracy:", "{:.5f}".format(test_acc))
 
-        if i % 100 == 0:
+        if i % 1 == 0:
             save_images(train_loss, test_loss, train_accuracy, test_accuracy, i)
 
 
 
     summary_writer.close()
-    save_path = saver.save(sess, "/Users/chingandywu/GRASP/checkpoint_0/", global_step=global_step)
-    print("Model saved in path: %s" % save_path)
+    path = saver.save(sess, save_path, global_step=global_step)
+    print("Model saved in path: %s" % path)
 
-# """ plot the training and test loss """
-# plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
-# plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
-# plt.title("Training and Test loss")
-# plt.xlabel("Epochs ", fontsize=16)
-# plt.ylabel("Loss ", fontsize=16)
-# plt.legend()
-# plt.savefig('fig/loss.png')
-# plt.show()
-#
-#
-# """ plot the trainng and test accuracy """
-# plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
-# plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
-# plt.title("Training and Test Accuracy")
-# plt.xlabel("Epochs ", fontsize=16)
-# plt.ylabel("Accuracy ", fontsize=16)
-# plt.legend()
-# plt.savefig('fig/accuracy.png')
-# plt.show()
+""" plot the training and test loss """
+plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
+plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
+plt.title("Training and Test loss")
+plt.xlabel("Epochs ", fontsize=16)
+plt.ylabel("Loss ", fontsize=16)
+plt.legend()
+plt.savefig('fig2/loss.png')
+plt.show()
+
+
+""" plot the trainng and test accuracy """
+plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
+plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
+plt.title("Training and Test Accuracy")
+plt.xlabel("Epochs ", fontsize=16)
+plt.ylabel("Accuracy ", fontsize=16)
+plt.legend()
+plt.savefig('fig2/accuracy.png')
+plt.show()

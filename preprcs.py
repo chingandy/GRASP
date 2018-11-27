@@ -116,6 +116,7 @@ def rebuilt_dataset(filepath):
     # print(type(choice))
 
 def rebuilt_dataset_2(filepath, savepath):
+    """ oversample the minor class of the dataset a bit """
 
     save_path = filepath.split("/")[-1]
     if savepath == 0:
@@ -128,26 +129,65 @@ def rebuilt_dataset_2(filepath, savepath):
     rebuilt_size = len(cage_ir) # we first rebuild the dataset based on the size of cage-irrelevant case
 
     with open(save_path,"w") as w:
-        for itr in range(rebuilt_size):
-            for e in cage_ir:
+        for e in cage_ir:
+            w.write(','.join(e))
+
+        pool = cycle(cage_r)
+        count = 0
+        size_aug_ind = 72
+        for e in pool:
+            if count < rebuilt_size/size_aug_ind:
                 w.write(','.join(e))
+                count += 1
+            else:
+                quit()
+
+
+def rebuilt_dataset_split(filepath, savepath):
+
+    save_path = filepath.split("/")[-1]
+    if savepath == 0:
+        save_path_1 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + save_path + "_train"
+        save_path_2 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + save_path + "_test"
+
+    else:
+        save_pat_1 = savepath + "re_" + save_path + "_train"
+        save_path_2 = savepath + "re_" + save_path + "_test"
+
+    cage_r, cage_ir = separate_classes(filepath)
+
+    rebuilt_size = len(cage_ir) # we first rebuild the dataset based on the size of cage-irrelevant case
+    try:
+        with open(save_path_1, 'w') as a, open(save_path_2, 'w') as b:
+
+            for key, item in enumerate(cage_ir):
+                if key % 4 == 1:
+                    # print("writing in the train dataset")
+                    a.write(','.join(item))
+                else:
+                    b.write(','.join(item))
+                    # print("writing in the test dataset")
 
             pool = cycle(cage_r)
             count = 0
             size_aug_ind = 72
-            for e in pool:
+            for key, item in enumerate(pool):
                 if count < rebuilt_size/size_aug_ind:
-                    w.write(','.join(e))
+                    if key % 4 == 1:
+                        a.write(','.join(item))
+                        # print("writing in the train dataset")
+                    else:
+                        b.write(','.join(item))
+                        # print("writing in the test dataset")
                     count += 1
                 else:
                     quit()
 
-            # choice = random.choice(dict_ir[object_idx])
-            # choice = ','.join(choice)
-            # w.write(choice)
-            # choice = random.choice(dict_r[object_idx])
-            # choice = ','.join(choice)
-            # w.write(choice)
+    except IOError as e:
+        print ('Operation failed: %s' % e.strerror)
+
+
+
 
 def built_small_dataset(filepath, savepath):
     """ build a small dataset contains only n objects with even class distribution.
@@ -191,7 +231,7 @@ if __name__ == '__main__':
     print(sys.argv)
 
     if(len(sys.argv) < 3):
-        print('usage: preprcs.py [r/s] <.txt file> <save path>, where <.txt file> is the file you want to preprocess')
+        print('usage: preprcs.py [r/s/rs] <.txt file> <save path>, where <.txt file> is the file you want to preprocess')
         quit()
 
     # datasetfile= str(sys.argv[1])
@@ -205,5 +245,7 @@ if __name__ == '__main__':
         rebuilt_dataset_2(filepath, savepath)
     elif flag == "s":
         built_small_dataset(filepath, savepath)
+    elif flag == "rs":
+        rebuilt_dataset_split(filepath, savepath)
     else:
         quit()

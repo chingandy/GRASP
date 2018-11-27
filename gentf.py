@@ -116,9 +116,9 @@ def main():
   print("Start")
   # DATASETNAME= datasetfile.split(".")[-2]
   # writer = tf.python_io.TFRecordWriter(DATASETNAME+'.tfrecords')
-  # DATA_DIR="./"
+  # DATA_DIR="./tf-dataset/"
   DATASETNAME = filepath.split("/")[-1].split(".")[-2]
-  writer = tf.python_io.TFRecordWriter(DATASETNAME+'.tfrecords')
+  writer = tf.python_io.TFRecordWriter(DATA_DIR+DATASETNAME+'.tfrecords')
   # datasetfile = "dataset_100_200.txt"
 
   # DATA_DIR = "/Users/chingandywu/chinganwu/KTH/Y2P1/project-course-in-data-science/data_gen/"
@@ -303,7 +303,7 @@ def main():
 
   shuffle(examples)
   for name,namech1,namech2,image_data64,trainlable in examples:
-      
+
       tf_example = convert_to_example(name,namech1,namech2,image_data64,trainlable)
       writer.write(tf_example.SerializeToString())
       counter += 1
@@ -352,4 +352,9 @@ if __name__ == '__main__':
 
     # datasetfile= str(sys.argv[1])
     filepath = str(sys.argv[1])
+
+    if len(sys.argv) >2:
+        DATA_DIR= sys.argv[2]
+    else:
+        DATA_DIR="./tf-dataset/"
     main()
