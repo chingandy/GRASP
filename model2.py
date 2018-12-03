@@ -8,11 +8,16 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
 """ DATA SET SETTING """
-# training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
-# test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
-training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200.tfrecords"
-test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400.tfrecords"
-save_path = "./checkpoint_new"
+training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
+test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
+restore_path = "./checkpoint_seen/"
+save_path = restore_path
+
+
+# training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200.tfrecords"
+# test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400.tfrecords"
+# restore_path = "./checkpoint/"
+# save_path = restore_path
 
 """ Hyperparameter setting"""
 training_iters = 100
@@ -271,7 +276,7 @@ with tf.Session() as sess:
         test_accuracy.append(test_acc)
         print("Testing Accuracy:", "{:.5f}".format(test_acc))
 
-        if i % 1 == 0:
+        if i % 10 == 0:
             save_images(train_loss, test_loss, train_accuracy, test_accuracy, i)
 
 
