@@ -10,8 +10,11 @@ import numpy as np
 # text = file.readline()
 # file.close()
 
-file_1 = '/Users/chingandywu/GRASP/data_gen/dataset_100_200.txt'
-file_2 = '/Users/chingandywu/GRASP/data_gen/dataset_300_400.txt'
+file_1 = '/Users/chingandywu/GRASP/data_gen/dataset_0_100.txt'
+file_2 = '/Users/chingandywu/GRASP/data_gen/dataset_400_500.txt'
+file_3 = '/Users/chingandywu/GRASP/data_gen/dataset/dataset_100_200.txt'
+# file_1 = '/Users/chingandywu/GRASP/data_gen_an/dataset_800_900.txt'
+# file_2 = '/Users/chingandywu/GRASP/data_gen_an/dataset_900_1000.txt'
 
 def print_out_part(filepath):
     """ print out part of the data"""
@@ -35,6 +38,7 @@ def file_len(filename):
 print_out_part(file_1)
 print("The number of lines: ", file_len(file_1))
 print("The number of lines: ", file_len(file_2))
+print("The number of lines: ", file_len(file_3))
 
 """
 ***Dataset structure***

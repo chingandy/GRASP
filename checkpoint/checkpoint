@@ -1,2 +1,2 @@
-model_checkpoint_path: "/Users/chingandywu/GRASP/checkpoint/-1350"
-all_model_checkpoint_paths: "/Users/chingandywu/GRASP/checkpoint/-1350"
+model_checkpoint_path: "-2"
+all_model_checkpoint_paths: "-2"
