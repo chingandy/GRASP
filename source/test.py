@@ -7,12 +7,28 @@ import cv2
 
 from math import sin, cos, pi
 from random import shuffle
-x = np.array([1,2,3])
-y = np.array([0,2,3])
-if np.all(3 == x):
-    print("the same")
-else:
-    print("Different!!")
+
+# x = np.linspace(0,10,10)
+# x2 = np.linspace(0,5,5)
+# y = 2*x
+# y2 = 3*x2 + 3
+
+x = [1,2,3,4,5]
+x2 = [5,4,8,9,0]
+# x2 = [4,3,5,6,5,4,3,7,8,9]
+plt.figure()
+plt.plot(x)
+plt.plot(range(len(x)), x)
+plt.plot(range(len(x2)), x2)
+# plt.plot(range(len(x)),x2)
+plt.show()
+print(x)
+# x = np.array([1,2,3])
+# y = np.array([0,2,3])
+# if np.all(3 == x):
+#     print("the same")
+# else:
+#     print("Different!!")
 # x = [1,2,3,4,5,6]
 # y = [111,232,345,566]
 # print(x)

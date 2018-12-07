@@ -10,13 +10,15 @@ import os
 
 TRAIN =  True
 """ DATA SET SETTING """
-training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
-test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
-evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400.tfrecords"
+training_dataset_1 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200.tfrecords"
+training_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
+training_dataset_3 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_600_700.tfrecords"
+training_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_700_800.tfrecords"
+test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_0_100.tfrecords"
+# evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_Dataset_test.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
 restore_path = "./checkpoint/"
-# restore_path = "./checkpoint_unseen/"
 # restore_path = "./checkpoint_test/"
 save_path = restore_path
 fig_folder = 'fig'
@@ -41,27 +43,31 @@ def make_one_hot(dataset):
         new_dataset.append(vec)
     return np.array(new_dataset)
 
-def save_images(train_loss, test_loss, train_accuracy, test_accuracy, global_step,iter):
+def save_images(train_loss, test_loss, train_accuracy, test_accuracy, global_step):
 
     """ plot the training and test loss """
-    plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
-    plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
+    plt.plot(train_loss, 'b', label="Training loss")
+    plt.plot(test_loss, 'r', label="Test loss")
+    # plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
+    # plt.plot(range(len(train_loss)), test_loss, 'r', label="Test loss")
     plt.title("Training and Test loss")
-    plt.xlabel("Epochs ", fontsize=16)
+    plt.xlabel("Steps ", fontsize=16)
     plt.ylabel("Loss ", fontsize=16)
     plt.legend()
-    plt.savefig('../'+ fig_folder +'/loss-' + str(iter + global_step + 1) + '.png')
+    plt.savefig('../'+ fig_folder +'/loss-' + str(global_step) + '.png')
     plt.clf()
 
 
     """ plot the trainng and test accuracy """
-    plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
-    plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
+    plt.plot(train_accuracy, 'b', label="Training accuracy")
+    plt.plot(test_accuracy, 'r', label="Test accuracy")
+    # plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
+    # plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
     plt.title("Training and Test Accuracy")
-    plt.xlabel("Epochs ", fontsize=16)
+    plt.xlabel("Steps ", fontsize=16)
     plt.ylabel("Accuracy ", fontsize=16)
     plt.legend()
-    plt.savefig('../'+ fig_folder +'/accuracy-' + str(iter + global_step + 1) + '.png')
+    plt.savefig('../'+ fig_folder +'/accuracy-' + str(global_step) + '.png')
     plt.clf()
 
 
@@ -126,7 +132,7 @@ def conv_net(x, weights, biases):
     # here we call the conv2d function we had defined above and pass the input image x, weights wc1 and bias bc1.
     conv1 = conv2d(x, weights['wc1'], biases['bc1'])
     conv1 = relu(conv1)
-    # print("con1: ",conv1.get_shape())
+    print("con1: ",conv1.get_shape())
     # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 14*14 matrix.
     # conv1 = maxpool2d(conv1, k=2)
 
@@ -152,7 +158,7 @@ def conv_net(x, weights, biases):
     # Fully connected layer
     # Reshape conv2 output to fit fully connected layer input
     # print("weights['wd1'].get_shape().as_list()[0] : ", weights['wd1'].get_shape().as_list()[0])
-    # print("con4: ",conv4.get_shape())
+    print("con4: ",conv4.get_shape())
     fc1 = tf.reshape(conv4, [-1, weights['wd1'].get_shape().as_list()[0]])
     # print(fc1.get_shape())
     fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
@@ -184,6 +190,7 @@ saver = tf.train.Saver()
 # Read in the training and test data in tfrecords format
 filenames = tf.placeholder(tf.string, shape=[None])
 dataset = tf.data.TFRecordDataset(filenames)
+dataset = dataset.shuffle(buffer_size = batch_size)
 # Map the parser over dataset, and batch results by up to batch_size
 # dataset = dataset.map(parser,num_parallel_calls=2) # depends on the number of cores of your cpu
 # dataset = dataset.batch(batch_size)
@@ -204,8 +211,10 @@ def main():
 
 
     with tf.Session() as sess:
-
         sess.run(init)
+        # Restore variables from disk.
+        # save_path = "/Users/chingandywu/GRASP/checkpoint_4/"
+        # save_path = "./checkpoint_0/"
         if os.path.exists(save_path):
             saver.restore(sess, tf.train.latest_checkpoint(save_path))
             print("Model restored.")
@@ -225,21 +234,18 @@ def main():
             print("Epoch: ", i)
             count = 0
             # initialze training iterator
-            sess.run(iterator.initializer, feed_dict={filenames:[training_dataset]})
+            sess.run(iterator.initializer, feed_dict={filenames:[training_dataset_1,training_dataset_2,training_dataset_3,training_dataset_4]})
             # while True:
-            for iter in range(10): # train on the first 50 batches
+            for iter in range(20):
                 try:
-                    print("tryrytytytytytyty")
                     # traing data in a batch
                     batch_x, batch_y, file_train= sess.run([images, labels, filename])
                     # data preprocessing
                     batch_x = batch_x/255
                     batch_y = make_one_hot(batch_y)
-                    # if count % 10 == 0:
-                    print("  batch: ", count)
+
                     opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 0.6})
                     loss, acc = sess.run([cost, accuracy], feed_dict={x:batch_x, y:batch_y, keep_prob:1.0})
-                    print("^^^^^^^^^^^^^^^^^^^^^^^",acc)
                     train_accuracy.append(acc)
                     train_loss.append(loss)
                     # if np.all(pre_batch == batch_x):
@@ -249,6 +255,7 @@ def main():
                     #     print("#"*50)
                     #     print("Different!!!!")
                     # pre_batch = batch_x
+                    print("  batch: ", count)
                     if count % 50 == 0:
                         path = saver.save(sess, save_path, global_step=global_step)
                         print("Model saved in path: %s" % path)
@@ -258,7 +265,7 @@ def main():
             # initialize test iterator
             sess.run(iterator.initializer, feed_dict={filenames:[test_dataset]})
             # while True:
-            for iter in range(10):
+            for iter in range(20):
                 try:
                     # test data in a batch
 
@@ -266,12 +273,16 @@ def main():
                     # data preprocessing
                     x_test = x_test/255
                     y_test = make_one_hot(y_test)
-                    test_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+                    valid_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
                     test_loss.append(valid_loss)
-                    test_accuracy.append(test_acc)
+                    test_accuracy.append(valid_acc)
                 except tf.errors.OutOfRangeError:
                     break
-            """ Print out the training and validation sets to see if they are different"""
+
+            # train_loss.append(loss)
+            # test_loss.append(valid_loss)
+            # train_accuracy.append(acc)
+            # test_accuracy.append(test_acc)
             # print("-"*50)
             # print("filename train: \n", file_train)
             # print("-"*50)
@@ -280,37 +291,38 @@ def main():
             # print("Iter "+ str(i + step + 1) + ", Loss= " + "{:.6f}".format(loss))
             # print("Training Accuracy= " + "{:.5f}".format(acc) + "Testing Accuracy:", "{:.5f}".format(test_acc))
             # print("Iter "+ str(i + step + 1) + ", Loss= " + "{:.6f}".format(loss))
-            print("Training Accuracy= " + "{:.5f}".format(acc) + " Testing Accuracy:", "{:.5f}".format(test_acc))
+            max_train_acc = np.max(train_accuracy)
+            max_valid_acc = np.max(test_accuracy)
+            print("Training Accuracy= " + "{:.5f}".format(max_train_acc) + "Testing Accuracy:", "{:.5f}".format(max_valid_acc))
 
-            # if i % 50 == 0:
-            #     save_images(train_loss, test_loss, train_accuracy, test_accuracy, step,i)
+
+            save_images(train_loss, test_loss, train_accuracy, test_accuracy, global_step)
 
 
-        print("Test accuracy: ", np.max(test_accuracy))
         summary_writer.close()
         path = saver.save(sess, save_path, global_step=global_step)
         print("Model saved in path: %s" % path)
 
     """ plot the training and test loss """
     plt.figure()
-    plt.plot(range(len(train_loss)), train_loss, 'b', label="Training loss")
-    plt.plot(range(len(test_loss)), test_loss, 'r', label="Test loss")
+    plt.plot(train_loss, 'b', label="Training loss")
+    plt.plot(test_loss, 'r', label="Test loss")
     plt.title("Training and Test loss")
     plt.xlabel("Epochs ", fontsize=16)
     plt.ylabel("Loss ", fontsize=16)
     plt.legend()
-    plt.savefig('../'+ fig_folder +'/loss_new.png')
+    plt.savefig('../' + fig_folder + '/loss_last.png')
     plt.show()
 
     """ plot the training and test accuracy"""
     plt.figure()
-    plt.plot(range(len(train_accuracy)), train_accuracy, 'b', label="Training accuracy")
-    plt.plot(range(len(test_accuracy)), test_accuracy, 'r', label="Test accuracy")
+    plt.plot(train_accuracy, 'b', label="Training accuracy")
+    plt.plot(test_accuracy, 'r', label="Test accuracy")
     plt.title("Training and Test Accuracy")
     plt.xlabel("Epochs ", fontsize=16)
     plt.ylabel("Accuracy ", fontsize=16)
     plt.legend()
-    plt.savefig('../'+fig +'/accuracy_new.png')
+    plt.savefig('../' + fig_folder+ '/accuracy_last.png')
     plt.show()
 
 def evaluate():
@@ -351,10 +363,10 @@ def evaluate():
         test_loss = []
         # train_accuracy = []
         test_accuracy = []
-        # summary_writer = tf.summary.FileWriter('./output', sess.graph)
+        summary_writer = tf.summary.FileWriter('./output', sess.graph)
 
 
-        for i in range(steps):
+        for i in range(epochs):
 
 
             # test data in a batch
@@ -362,11 +374,11 @@ def evaluate():
             # data preprocessing
             x_test = x_test/255
             y_test = make_one_hot(y_test)
-            test_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+            # valid_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
 
             y_p = tf.argmax(pred,1)
-            test_acc, valid_loss, y_pred = sess.run([accuracy, cost, y_p], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
-            test_loss.append(valid_loss)
+            test_acc, test_loss, y_pred = sess.run([accuracy, cost, y_p], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+            test_loss.append(test_loss)
             test_accuracy.append(test_acc)
             # test_loss.append(valid_loss)
             # test_accuracy.append(test_acc)
@@ -398,5 +410,4 @@ if __name__ == '__main__':
     if TRAIN == True:
         main()
     else:
-        steps = 10
         evaluate()
