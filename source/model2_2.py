@@ -8,7 +8,7 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
 
-TRAIN =  True
+TRAIN =  False
 """ DATA SET SETTING """
 training_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
 test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"

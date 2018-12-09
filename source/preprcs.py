@@ -106,15 +106,6 @@ def rebuilt_dataset(filepath):
             w.write(choice)
 
 
-    # object_idx = 2
-    # # object = objects[object_idx]
-    # # print(object)
-    # print(dict_ir.keys())
-    # choice = random.choice(dict_ir[object_idx])
-    # choice = ','.join(choice)
-    # print(choice)
-    # print(type(choice))
-
 def rebuilt_dataset_2(filepath, savepath):
     """ oversample the minor class of the dataset a bit """
 
@@ -147,12 +138,12 @@ def rebuilt_dataset_split(filepath, savepath):
 
     save_path = filepath.split("/")[-1]
     if savepath == 0:
-        save_path_1 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + save_path + "_train"
-        save_path_2 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_" + save_path + "_test"
+        save_path_1 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_train_" + save_path
+        save_path_2 = "/Users/chingandywu/GRASP/rebuilt-dataset/" + "re_test_" + save_path
 
     else:
-        save_pat_1 = savepath + "train_re_" + save_path
-        save_path_2 = savepath + "test_re_" + save_path
+        save_pat_1 = savepath + "re_train_" + save_path
+        save_path_2 = savepath + "re_test_" + save_path
 
     cage_r, cage_ir = separate_classes(filepath)
 

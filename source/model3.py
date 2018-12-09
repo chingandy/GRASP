@@ -8,14 +8,21 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
 
-TRAIN =  True
+TRAIN =  False
 """ DATA SET SETTING """
-training_dataset_1 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200.tfrecords"
-training_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
-training_dataset_3 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_600_700.tfrecords"
-training_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_700_800.tfrecords"
-test_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_0_100.tfrecords"
-# evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400.tfrecords"
+training_dataset_1 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_0_100_train.tfrecords"
+training_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
+training_dataset_3 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400_train.tfrecords"
+training_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_500_600_train.tfrecords"
+training_dataset_5 = "/Users/chingandywu/GRASP/tf-dataset/re_train_dataset_600_700.tfrecords"
+training_dataset_6 = "/Users/chingandywu/GRASP/tf-dataset/re_train_dataset_700_800.tfrecords"
+
+test_dataset_1 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_0_100_test.tfrecords"
+test_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
+test_dataset_3 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400_test.tfrecords"
+test_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_test_dataset_600_700.tfrecords"
+
+evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_train_dataset_800_900.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_Dataset_test.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
 restore_path = "./checkpoint/"
@@ -25,7 +32,7 @@ fig_folder = 'fig'
 # fig_folder = 'fig_test'
 
 """ Hyperparameter setting"""
-epochs = 1
+epochs = 3
 learning_rate = 0.001
 # batch_size = 128
 batch_size = 128
@@ -99,7 +106,7 @@ def dropout(x, keep_prob):
     return tf.nn.dropout(x, keep_prob)
 
 def lrn(x):
-    return tf.nn.local_response_normalization(x)
+    return tf.nn.local_response_normalization(x, bias=2, alpha=1e-4, beta=0.75)
 
 def relu(x):
     return tf.nn.relu(x)
@@ -233,13 +240,17 @@ def main():
         for i in range(epochs):
             print("Epoch: ", i)
             count = 0
+
+
+            """ Training Phase """
             # initialze training iterator
-            sess.run(iterator.initializer, feed_dict={filenames:[training_dataset_1,training_dataset_2,training_dataset_3,training_dataset_4]})
-            # while True:
-            for iter in range(20):
+            sess.run(iterator.initializer, feed_dict={filenames:[training_dataset_1,training_dataset_2,training_dataset_3,training_dataset_4, training_dataset_5, training_dataset_6]})
+            while True:
+            # for iter in range(20):
                 try:
                     # traing data in a batch
                     batch_x, batch_y, file_train= sess.run([images, labels, filename])
+
                     # data preprocessing
                     batch_x = batch_x/255
                     batch_y = make_one_hot(batch_y)
@@ -262,13 +273,14 @@ def main():
                     count += 1
                 except tf.errors.OutOfRangeError:
                     break
+
+            """ Validation Phase"""
             # initialize test iterator
-            sess.run(iterator.initializer, feed_dict={filenames:[test_dataset]})
-            # while True:
-            for iter in range(20):
+            sess.run(iterator.initializer, feed_dict={filenames:[test_dataset_1, test_dataset_2, test_dataset_3, test_dataset_4]})
+            while True:
+            # for iter in range(20):
                 try:
                     # test data in a batch
-
                     x_test, y_test, file_test = sess.run([images, labels, filename])
                     # data preprocessing
                     x_test = x_test/255
@@ -276,6 +288,12 @@ def main():
                     valid_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
                     test_loss.append(valid_loss)
                     test_accuracy.append(valid_acc)
+                    if valid_acc < np.min(test_accuracy[-10:]):
+                        print("Min validation accracy: ", np.min(test_accuracy[-10:]))
+                        print("Current valid accuracy: ", valid_acc)
+                        s = sess.run(global_step)
+                        save_images(train_loss, test_loss, train_accuracy, test_accuracy, s)
+                        quit()
                 except tf.errors.OutOfRangeError:
                     break
 
@@ -283,10 +301,10 @@ def main():
             # test_loss.append(valid_loss)
             # train_accuracy.append(acc)
             # test_accuracy.append(test_acc)
-            # print("-"*50)
-            # print("filename train: \n", file_train)
-            # print("-"*50)
-            # print("filename test: ", file_test)
+            print("-"*50)
+            print("filename train: \n", file_train)
+            print("-"*50)
+            print("filename test: ", file_test)
 
             # print("Iter "+ str(i + step + 1) + ", Loss= " + "{:.6f}".format(loss))
             # print("Training Accuracy= " + "{:.5f}".format(acc) + "Testing Accuracy:", "{:.5f}".format(test_acc))
@@ -295,8 +313,8 @@ def main():
             max_valid_acc = np.max(test_accuracy)
             print("Training Accuracy= " + "{:.5f}".format(max_train_acc) + "Testing Accuracy:", "{:.5f}".format(max_valid_acc))
 
-
-            save_images(train_loss, test_loss, train_accuracy, test_accuracy, global_step)
+            s = sess.run(global_step)
+            save_images(train_loss, test_loss, train_accuracy, test_accuracy, s)
 
 
         summary_writer.close()
@@ -364,44 +382,58 @@ def evaluate():
         # train_accuracy = []
         test_accuracy = []
         summary_writer = tf.summary.FileWriter('./output', sess.graph)
+        f1_list = []
+        precision_list = []
 
+        # for i in range(steps):
+        while True:
+            try:
+                # test data in a batch
+                x_test, y_test = sess.run([test_images, test_labels])
+                # data preprocessing
+                x_test = x_test/255
+                y_test = make_one_hot(y_test)
+                # valid_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+                y_p = tf.argmax(pred,1)
+                acc, loss, y_pred = sess.run([accuracy, cost, y_p], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+                test_loss.append(loss)
+                test_accuracy.append(acc)
+                # test_loss.append(valid_loss)
+                # test_accuracy.append(test_acc)
 
-        for i in range(epochs):
+                y_true = np.argmax(y_test,1)
+                TP = tf.count_nonzero(y_pred * y_true)
+                FP = tf.count_nonzero(y_pred * (y_true - 1))
+                FN = tf.count_nonzero((y_pred - 1) * y_true)
 
+                precision = TP / (TP + FP)
+                recall = TP / (TP + FN)
+                f1 = 2 * precision * recall / (precision + recall)
 
-            # test data in a batch
-            x_test, y_test = sess.run([test_images, test_labels])
-            # data preprocessing
-            x_test = x_test/255
-            y_test = make_one_hot(y_test)
-            # valid_acc, valid_loss = sess.run([accuracy, cost], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
+                precision = sess.run(precision)
+                f1 = sess.run(f1)
+                precision_list.append(precision)
+                f1_list.append(f1)
 
-            y_p = tf.argmax(pred,1)
-            test_acc, test_loss, y_pred = sess.run([accuracy, cost, y_p], feed_dict={x:x_test, y: y_test, keep_prob: 1.0})
-            test_loss.append(test_loss)
-            test_accuracy.append(test_acc)
-            # test_loss.append(valid_loss)
-            # test_accuracy.append(test_acc)
+                print("TP: ", sess.run(TP))
+                print("FP: ", sess.run(FP))
+                print("FN: ", sess.run(FN))
+                print("precision: ", precision)
+                print("F1 score: ", f1)
+                print("Testing Accuracy:", "{:.5f}".format(acc))
+                # print("y_true: \n", y_true)
+                # print("y_pred: \n", y_pred)
+            except tf.errors.OutOfRangeError:
+                break
 
-            y_true = np.argmax(y_test,1)
-            TP = tf.count_nonzero(y_pred * y_true)
-            FP = tf.count_nonzero(y_pred * (y_true - 1))
-            FN = tf.count_nonzero((y_pred - 1) * y_true)
+        print("Max Test Accuracy: ", np.max(test_accuracy))
+        print("Avg Test Accuracy: ", np.average(test_accuracy))
 
-            precision = TP / (TP + FP)
-            recall = TP / (TP + FN)
-            f1 = 2 * precision * recall / (precision + recall)
-            # f1_score, best_op = tf.contrib.metrics.f1_score(y_true, y_pred)
-            # f1_score= sess.run(f1_score)
-            print("TP: ", sess.run(TP))
-            print("FP: ", sess.run(FP))
-            print("FN: ", sess.run(FN))
-            print("precision: ", sess.run(precision))
-            print("F1 score: ", sess.run(f1))
-            print("Testing Accuracy:", "{:.5f}".format(test_acc))
-            print("y_true: \n", y_true)
-            print("y_pred: \n", y_pred)
+        print("Max Precision: ", np.max(precision_list))
+        print("Avg Precision: ", np.average(precision_list))
 
+        print("Max f1 score: ", np.max(f1_list))
+        print("Avg f1 score: ", np.average(f1_list))
         # summary_writer.close()
         # path = saver.save(sess, save_path, global_step=global_step)
         # print("Model saved in path: %s" % path)
@@ -410,4 +442,5 @@ if __name__ == '__main__':
     if TRAIN == True:
         main()
     else:
+        steps = 10
         evaluate()
