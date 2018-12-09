@@ -3,7 +3,7 @@ import numpy as np
 import os
 from gentf import draw_object, draw_obstacles
 
-filepath = '/Users/chingandywu/GRASP/rebuilt-dataset/re_train_dataset_600_700.txt'
+filepath = '/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_100_200_test.txt'
 num_imgs = 10
 if(os.path.isfile(filepath)):
   with open(filepath) as f:

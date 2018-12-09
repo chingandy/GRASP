@@ -76,15 +76,29 @@ def file_len(filename):
 # print("The number of lines: ", file_len(file_2))
 # print("The number of lines: ", file_len(file_3))
 
+def sum_up(filepath):
+    cage_r, cage_ir = separate_classes(filepath)
+    objs_ir = len(check_objects(cage_ir))
+    # objs_r = len(check_objects(cage_r)
+    s = objs_ir * 2
+    return s
+
 def main():
-    file_1 = "/Users/chingandywu/GRASP/data_gen/dataset/dataset_100_200.txt"
+    file_1 = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_0_100_train.txt"
+    file_2 = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_100_200_train.txt"
+    file_3 = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_300_400_train.txt"
+    file_4 = "/Users/chingandywu/GRASP/rebuilt-dataset/re_dataset_500_600_train.txt"
+    file_5 = "/Users/chingandywu/GRASP/rebuilt-dataset/re_train_dataset_600_700.txt"
+    file_6 = "/Users/chingandywu/GRASP/rebuilt-dataset/re_train_dataset_700_800.txt"
     # file_2 = '/Users/chingandywu/GRASP/data_gen/dataset_400_500.txt'
     # file_3 = '/Users/chingandywu/GRASP/data_gen/dataset/dataset_100_200.txt'
-
-    print("The number of lines: ", file_len(file_1))
-    cage_r, cage_ir = separate_classes(file_1)
-    print("Objects in cage-irrelevant: ", len(check_objects(cage_ir)))
-    print("Objects in cage-rrelevant: ", len(check_objects(cage_r)))
+    sum = sum_up(file_1) + sum_up(file_2) + sum_up(file_3)+ sum_up(file_4)+sum_up(file_5)+sum_up(file_6)
+    print(sum)
+    # print("The number of lines: ", file_len(file_1)+file_len(file_2)+file_len(file_3)+file_len(file_4)+file_len(file_5)+file_len(file_6))
+    #
+    # cage_r, cage_ir = separate_classes(file_1)
+    # print("Objects in cage-irrelevant: ", len(check_objects(cage_ir)))
+    # print("Objects in cage-rrelevant: ", len(check_objects(cage_r)))
 
 if __name__ == '__main__':
     main()

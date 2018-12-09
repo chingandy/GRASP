@@ -22,7 +22,7 @@ test_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tf
 test_dataset_3 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400_test.tfrecords"
 test_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_test_dataset_600_700.tfrecords"
 
-evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_train_dataset_800_900.tfrecords"
+evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_Dataset_test.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
 restore_path = "./folder/"

@@ -8,7 +8,7 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = "0" # for training on gpu
 
 
-TRAIN =  True # if you want to train the model, set this parameter equals to True.
+TRAIN =  False # if you want to train the model, set this parameter equals to True.
 """ DATA SET SETTING """
 training_dataset_1 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_0_100_train.tfrecords"
 training_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_train.tfrecords"
@@ -22,13 +22,14 @@ test_dataset_2 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_100_200_test.tf
 test_dataset_3 = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_300_400_test.tfrecords"
 test_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_test_dataset_600_700.tfrecords"
 
-evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_train_dataset_800_900.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_Dataset_test.tfrecords"
-# evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
-restore_path = "./checkpoint_nodrp/"
+# evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_Dataset_test.tfrecords"
+evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_test_dataset_800_900.tfrecords"
+# restore_path = "/Users/chingandywu/GRASP/report/checkpoint_final_large_dataset" # the second model with lrn and dropout
+restore_path = "./checkpoint_nolrn/"
 # restore_path = "./checkpoint_test/"
 save_path = restore_path
-fig_folder = 'fig_nodrp'
+fig_folder = 'fig_nolrn'
 # fig_folder = 'fig_test'
 
 """ Hyperparameter setting"""
@@ -147,7 +148,7 @@ def conv_net(x, weights, biases):
     # here we call the conv2d function we had defined above and pass the input image x, weights wc2 and bias bc2.
     conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
     conv2 = relu(conv2)
-    conv2 = lrn(conv2)
+    # conv2 = lrn(conv2)
     conv2 = maxpool2d(conv2, k=2)
     # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs as 7*7 matrix.
     # conv2 = maxpool2d(conv2, k=2)
@@ -157,7 +158,7 @@ def conv_net(x, weights, biases):
     conv3 = relu(conv3)
     conv4 = conv2d(conv3, weights['wc4'], biases['bc4'])
     conv4 = relu(conv4)
-    conv4 = lrn(conv4)
+    # conv4 = lrn(conv4)
     # lrn1 =
     # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 4*4.
     # conv3 = maxpool2d(conv3, k=2)
@@ -255,7 +256,7 @@ def main():
                     batch_x = batch_x/255
                     batch_y = make_one_hot(batch_y)
 
-                    opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 1.0}) # chinge the dropout rate here
+                    opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 0.6}) # chinge the dropout rate here
                     loss, acc = sess.run([cost, accuracy], feed_dict={x:batch_x, y:batch_y, keep_prob:1.0})
                     train_accuracy.append(acc)
                     train_loss.append(loss)
@@ -385,8 +386,9 @@ def evaluate():
         f1_list = []
         precision_list = []
 
-        # for i in range(steps):
-        while True:
+        for i in range(steps):
+            print("Percentage: ", i/steps*100)
+        # while True:
             try:
                 # test data in a batch
                 x_test, y_test = sess.run([test_images, test_labels])
@@ -421,8 +423,8 @@ def evaluate():
                 print("precision: ", precision)
                 print("F1 score: ", f1)
                 print("Testing Accuracy:", "{:.5f}".format(acc))
-                # print("y_true: \n", y_true)
-                # print("y_pred: \n", y_pred)
+                print("y_true: \n", y_true)
+                print("y_pred: \n", y_pred)
             except tf.errors.OutOfRangeError:
                 break
 
@@ -442,5 +444,5 @@ if __name__ == '__main__':
     if TRAIN == True:
         main()
     else:
-        steps = 10
+        steps = 100
         evaluate()
