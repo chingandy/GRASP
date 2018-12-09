@@ -25,10 +25,10 @@ test_dataset_4 = "/Users/chingandywu/GRASP/tf-dataset/re_test_dataset_600_700.tf
 evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_train_dataset_800_900.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_Dataset_test.tfrecords"
 # evaluate_dataset = "/Users/chingandywu/GRASP/tf-dataset/re_dataset_400_500.tfrecords"
-restore_path = "./checkpoint_nodrp/"
+restore_path = "./folder/"
 # restore_path = "./checkpoint_test/"
 save_path = restore_path
-fig_folder = 'fig_nodrp'
+fig_folder = 'folder'
 # fig_folder = 'fig_test'
 
 """ Hyperparameter setting"""
@@ -112,65 +112,49 @@ def relu(x):
     return tf.nn.relu(x)
 
 weights = {
-    'wc1': tf.get_variable('W0', shape=(7,7,2,64), initializer=tf.contrib.layers.xavier_initializer()), # original: shape=(3,3,1,32)
-    'wc2': tf.get_variable('W1', shape=(5,5,64,64), initializer=tf.contrib.layers.xavier_initializer()),
-    'wc3': tf.get_variable('W2', shape=(3,3,64,64), initializer=tf.contrib.layers.xavier_initializer()),
-    'wc4': tf.get_variable('W3', shape=(3,3,64,128), initializer=tf.contrib.layers.xavier_initializer()),
-    'wd1': tf.get_variable('W4', shape=(32*32*128,128), initializer=tf.contrib.layers.xavier_initializer()),
-    'out': tf.get_variable('W6', shape=(128, n_classes), initializer=tf.contrib.layers.xavier_initializer()),
+    'wc1': tf.get_variable('W0', shape=(5,5,2,32), initializer=tf.contrib.layers.xavier_initializer()), # original: shape=(3,3,1,32)
+    'wc2': tf.get_variable('W1', shape=(5,5,32,64), initializer=tf.contrib.layers.xavier_initializer()),
+    # 'wc3': tf.get_variable('W2', shape=(3,3,64,128), initializer=tf.contrib.layers.xavier_initializer()),
+    'wd1': tf.get_variable('W3', shape=(16*16*64,1024), initializer=tf.contrib.layers.xavier_initializer()),
+    'out': tf.get_variable('W6', shape=(1024, n_classes), initializer=tf.contrib.layers.xavier_initializer()),
 
 }
 
 biases = {
-    'bc1': tf.get_variable('B0', shape=(64), initializer=tf.contrib.layers.xavier_initializer()),
+    'bc1': tf.get_variable('B0', shape=(32), initializer=tf.contrib.layers.xavier_initializer()),
     'bc2': tf.get_variable('B1', shape=(64), initializer=tf.contrib.layers.xavier_initializer()),
-    'bc3': tf.get_variable('B2', shape=(64), initializer=tf.contrib.layers.xavier_initializer()),
-    'bc4': tf.get_variable('B3', shape=(128), initializer=tf.contrib.layers.xavier_initializer()),
-    'bd1': tf.get_variable('B4', shape=(128), initializer=tf.contrib.layers.xavier_initializer()),
-    'out': tf.get_variable('B5', shape=(2), initializer=tf.contrib.layers.xavier_initializer()),  # original: shape=(10)
+    # 'bc3': tf.get_variable('B2', shape=(128), initializer=tf.contrib.layers.xavier_initializer()),
+    'bd1': tf.get_variable('B3', shape=(1024), initializer=tf.contrib.layers.xavier_initializer()),
+    'out': tf.get_variable('B4', shape=(2), initializer=tf.contrib.layers.xavier_initializer()),  # original: shape=(10)
 }
 
 keep_prob = tf.placeholder(tf.float32)
-
-
 
 def conv_net(x, weights, biases):
 
     # here we call the conv2d function we had defined above and pass the input image x, weights wc1 and bias bc1.
     conv1 = conv2d(x, weights['wc1'], biases['bc1'])
-    conv1 = relu(conv1)
-    print("con1: ",conv1.get_shape())
     # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 14*14 matrix.
-    # conv1 = maxpool2d(conv1, k=2)
+    conv1 = maxpool2d(conv1, k=2)
 
     # Convolution Layer
     # here we call the conv2d function we had defined above and pass the input image x, weights wc2 and bias bc2.
     conv2 = conv2d(conv1, weights['wc2'], biases['bc2'])
-    conv2 = relu(conv2)
-    conv2 = lrn(conv2)
-    conv2 = maxpool2d(conv2, k=2)
     # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs as 7*7 matrix.
-    # conv2 = maxpool2d(conv2, k=2)
+    conv2 = maxpool2d(conv2, k=2)
     # conv2 = dropout(conv2, keep_prob)
 
-    conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
-    conv3 = relu(conv3)
-    conv4 = conv2d(conv3, weights['wc4'], biases['bc4'])
-    conv4 = relu(conv4)
-    conv4 = lrn(conv4)
-    # lrn1 =
-    # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 4*4.
+    # conv3 = conv2d(conv2, weights['wc3'], biases['bc3'])
+    # # Max Pooling (down-sampling), this chooses the max value from a 2*2 matrix window and outputs a 4*4.
     # conv3 = maxpool2d(conv3, k=2)
 
     # Fully connected layer
     # Reshape conv2 output to fit fully connected layer input
-    # print("weights['wd1'].get_shape().as_list()[0] : ", weights['wd1'].get_shape().as_list()[0])
-    print("con4: ",conv4.get_shape())
-    fc1 = tf.reshape(conv4, [-1, weights['wd1'].get_shape().as_list()[0]])
-    # print(fc1.get_shape())
+    fc1 = tf.reshape(conv2, [-1, weights['wd1'].get_shape().as_list()[0]])
     fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
     fc1 = tf.nn.relu(fc1)
     fc1 = dropout(fc1, keep_prob)
+
     # Ouput, class prediction
     # finally we multiply the fully connected layer with the weights and add a bias term
     out = tf.add(tf.matmul(fc1, weights['out']), biases['out'])
@@ -255,7 +239,7 @@ def main():
                     batch_x = batch_x/255
                     batch_y = make_one_hot(batch_y)
 
-                    opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 1.0}) # chinge the dropout rate here
+                    opt = sess.run(optimizer, feed_dict={x:batch_x, y:batch_y, keep_prob: 0.6}) # chinge the dropout rate here
                     loss, acc = sess.run([cost, accuracy], feed_dict={x:batch_x, y:batch_y, keep_prob:1.0})
                     train_accuracy.append(acc)
                     train_loss.append(loss)
